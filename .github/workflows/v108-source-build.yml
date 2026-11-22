@@ -6,6 +6,10 @@ on:
       - audit/v108-source-review
     paths:
       - '.github/workflows/v108-source-build.yml'
+      - 'src/**'
+      - 'mobile/src/**'
+      - package.json
+      - mobile/package.json
 
 permissions:
   contents: read

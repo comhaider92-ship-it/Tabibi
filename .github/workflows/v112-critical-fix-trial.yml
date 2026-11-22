@@ -1,0 +1,67 @@
+name: TABIBI V112 critical dependency remediation trial
+on:
+  push:
+    branches:
+      - v112-critical-fix-trial
+    paths:
+      - '.github/workflows/v112-critical-fix-trial.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Trial backend bcrypt 6 upgrade
+        run: |
+          npm install --save-exact bcrypt@6.0.0 --ignore-scripts
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:build-readiness
+          npm run check:migrations
+          npm audit --json > backend-audit-v112.json || true
+      - name: Trial mobile tar patched override
+        working-directory: mobile
+        run: |
+          npm pkg set 'overrides.tar=7.5.21'
+          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm audit --json > ../mobile-audit-v112.json || true
+      - name: Summarize trial results
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const out = ['# V112 critical dependency remediation trial', '', 'This is an isolated compatibility trial. It does not modify main, V108, V109, V110, or V111.', '', 'Backend trial: bcrypt 6.0.0 to remove the vulnerable bcrypt 5 / @mapbox/node-pre-gyp / tar dependency chain.', 'Mobile trial: tar override 7.5.21 to test the patched tar release under the existing Expo SDK 52 dependency tree.', ''];
+          for (const [f,label] of [['backend-audit-v112.json','Backend'],['mobile-audit-v112.json','Mobile']]) {
+            if (!fs.existsSync(f)) { out.push('## '+label, '', 'Audit report not generated.', ''); continue; }
+            try {
+              const a=JSON.parse(fs.readFileSync(f,'utf8'));
+              out.push('## '+label, '', 'Totals: '+JSON.stringify(a.metadata?.vulnerabilities || {}), '', '| Package | Severity | Direct | Fix available |', '|---|---|---:|---|');
+              for (const [n,v] of Object.entries(a.vulnerabilities || {})) out.push('| '+n+' | '+v.severity+' | '+v.isDirect+' | '+JSON.stringify(v.fixAvailable)+' |');
+              out.push('');
+            } catch(e) { out.push(label+' audit parse error: '+e.message); }
+          }
+          fs.writeFileSync('V112_CRITICAL_FIX_TRIAL.md',out.join('\n'));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v112-critical-fix-trial
+          path: |
+            V112_CRITICAL_FIX_TRIAL.md
+            backend-audit-v112.json
+            mobile-audit-v112.json
+            package.json
+            package-lock.json
+            mobile/package.json
+            mobile/package-lock.json
+          if-no-files-found: warn
+          retention-days: 14

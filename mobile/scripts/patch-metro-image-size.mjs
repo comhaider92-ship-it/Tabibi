@@ -33,6 +33,8 @@ if (source.includes(compatible)) {
 } else if (source.includes(legacy)) {
   writeFileSync(metroAssetsPath, source.replace(legacy, compatible));
   console.log('Applied Metro adapter with path-aware image-size v2 support.');
+} else if (!source.includes('image-size')) {
+  console.log('Metro no longer depends on image-size; no compatibility patch is required.');
 } else {
-  throw new Error('Unsupported Metro Assets.js layout; refusing to patch an unknown version.');
+  throw new Error('Unsupported Metro image-size integration; refusing to patch an unknown version.');
 }

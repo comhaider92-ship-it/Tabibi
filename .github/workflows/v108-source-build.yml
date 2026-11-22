@@ -32,8 +32,10 @@ jobs:
         shell: bash
         run: |
           npm audit --json > backend-audit.json || true
+          npm audit --omit=dev --json > backend-prod-audit.json || true
           (cd mobile && npm audit --json > ../mobile-audit.json) || true
-          node -e 'const fs=require("fs"); for (const file of ["backend-audit.json","mobile-audit.json"]) { const a=JSON.parse(fs.readFileSync(file,"utf8")); const v=a.metadata?.vulnerabilities ?? {}; console.log(file + ": " + JSON.stringify(v)); for (const [name,item] of Object.entries(a.vulnerabilities ?? {})) if (["high","critical"].includes(item.severity)) console.log(name + " | " + item.severity + " | range=" + item.range + " | fix=" + JSON.stringify(item.fixAvailable)); }'
+          (cd mobile && npm audit --omit=dev --json > ../mobile-prod-audit.json) || true
+          node -e 'const fs=require("fs"); for (const file of ["backend-audit.json","backend-prod-audit.json","mobile-audit.json","mobile-prod-audit.json"]) { const a=JSON.parse(fs.readFileSync(file,"utf8")); const v=a.metadata?.vulnerabilities ?? {}; console.log(file + ": " + JSON.stringify(v)); if (!file.includes("prod")) for (const [name,item] of Object.entries(a.vulnerabilities ?? {})) if (["high","critical"].includes(item.severity)) console.log(name + " | " + item.severity + " | range=" + item.range + " | fix=" + JSON.stringify(item.fixAvailable)); }'
       - name: Save dependency lockfiles
         shell: bash
         run: |
@@ -70,4 +72,6 @@ jobs:
           path: |
             backend-audit.json
             mobile-audit.json
+            backend-prod-audit.json
+            mobile-prod-audit.json
           if-no-files-found: warn

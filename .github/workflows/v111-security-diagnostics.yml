@@ -5,6 +5,11 @@ on:
       - v111-security-diagnostics
     paths:
       - '.github/workflows/v111-security-diagnostics.yml'
+  pull_request:
+    branches:
+      - v110-security-fixes
+    paths:
+      - '.github/workflows/v111-security-diagnostics.yml'
   workflow_dispatch:
 permissions:
   contents: read

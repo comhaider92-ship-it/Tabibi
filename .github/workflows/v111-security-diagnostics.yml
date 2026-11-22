@@ -1,0 +1,73 @@
+name: TABIBI V111 dependency diagnostics
+on:
+  push:
+    branches:
+      - v111-security-diagnostics
+    paths:
+      - '.github/workflows/v111-security-diagnostics.yml'
+  pull_request:
+    branches:
+      - v110-security-fixes
+    paths:
+      - '.github/workflows/v111-security-diagnostics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Backend dependency diagnostics
+        run: |
+          npm ci --ignore-scripts
+          npm audit --json > backend-audit.json || true
+          npm explain tar > backend-tar-explain.txt 2>&1 || true
+          npm ls tar --all > backend-tar-tree.txt 2>&1 || true
+          npm audit fix --dry-run --ignore-scripts --json > backend-fix-dry-run.json 2>&1 || true
+      - name: Mobile dependency diagnostics
+        working-directory: mobile
+        run: |
+          npm ci --ignore-scripts
+          npm audit --json > ../mobile-audit.json || true
+          npm explain tar > ../mobile-tar-explain.txt 2>&1 || true
+          npm ls tar --all > ../mobile-tar-tree.txt 2>&1 || true
+          npm audit fix --dry-run --ignore-scripts --json > ../mobile-fix-dry-run.json 2>&1 || true
+      - name: Summarize dependency paths and audit totals
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const out = ['# V111 dependency diagnostics', '', 'This workflow is read-only: it does not edit package manifests or lockfiles.', ''];
+          for (const [file, label] of [['backend-audit.json','Backend'],['mobile-audit.json','Mobile']]) {
+            if (!fs.existsSync(file)) continue;
+            try {
+              const a = JSON.parse(fs.readFileSync(file,'utf8'));
+              out.push('## '+label, '', 'Totals: '+JSON.stringify(a.metadata?.vulnerabilities || {}), '', '| Package | Severity | Range | Direct | Fix available |', '|---|---|---|---:|---|');
+              for (const [name,v] of Object.entries(a.vulnerabilities || {})) {
+                out.push('| '+name+' | '+v.severity+' | '+(v.range || '').replace(/\|/g,'\\|')+' | '+v.isDirect+' | '+JSON.stringify(v.fixAvailable)+' |');
+              }
+              out.push('');
+            } catch(e) { out.push(label+': unable to parse audit JSON: '+e.message); }
+          }
+          for (const f of ['backend-tar-explain.txt','backend-tar-tree.txt','mobile-tar-explain.txt','mobile-tar-tree.txt']) {
+            if (fs.existsSync(f)) out.push('## '+f, '', '```text', fs.readFileSync(f,'utf8'), '```', '');
+          }
+          fs.writeFileSync('V111_DEPENDENCY_DIAGNOSTICS.md',out.join('\n'));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v111-dependency-diagnostics
+          path: |
+            V111_DEPENDENCY_DIAGNOSTICS.md
+            backend-audit.json
+            mobile-audit.json
+            backend-fix-dry-run.json
+            mobile-fix-dry-run.json
+          if-no-files-found: warn
+          retention-days: 14

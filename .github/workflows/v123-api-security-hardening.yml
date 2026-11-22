@@ -1,0 +1,63 @@
+name: TABIBI V123 API security hardening validation
+on:
+  push:
+    branches:
+      - v123-api-security-hardening
+    paths:
+      - 'src/main.ts'
+      - 'docs/V123_API_SECURITY_HARDENING.md'
+      - '.github/workflows/v123-api-security-hardening.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v123-api-security-hardening
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked backend dependencies
+        run: npm ci --ignore-scripts
+      - name: Build backend
+        run: npm run build
+      - name: Check database migrations
+        run: npm run check:migrations
+      - name: Check build readiness
+        run: npm run check:build-readiness
+      - name: Assert API security headers
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const source = fs.readFileSync('src/main.ts', 'utf8');
+          const required = [
+            "disable('x-powered-by')",
+            "X-Content-Type-Options', 'nosniff",
+            "X-Frame-Options', 'DENY",
+            "Referrer-Policy', 'no-referrer",
+            "Cache-Control', 'no-store, max-age=0",
+            "Strict-Transport-Security', 'max-age=15552000",
+            "process.env.NODE_ENV === 'production'"
+          ];
+          const missing = required.filter(value => !source.includes(value));
+          if (missing.length) {
+            console.error('Missing security controls:', missing);
+            process.exit(1);
+          }
+          console.log('API security header assertions passed.');
+          NODE
+      - name: Capture dependency audit
+        if: always()
+        run: npm audit --json > backend-audit-v123.json || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v123-api-security-evidence
+          path: backend-audit-v123.json
+          if-no-files-found: warn
+          retention-days: 30

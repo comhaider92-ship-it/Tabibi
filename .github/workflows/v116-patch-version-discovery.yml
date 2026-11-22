@@ -1,0 +1,23 @@
+name: TABIBI V116 patched package version discovery
+on:
+  push:
+    branches:
+      - v116-patch-version-discovery
+    paths:
+      - '.github/workflows/v116-patch-version-discovery.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Query current registry versions and advisory status
+        run: |
+          for p in lodash multer postcss image-size @xmldom/xmldom nodemailer body-parser; do
+            echo "### $p"
+            npm view "$p" version
+          done

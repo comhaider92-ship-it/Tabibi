@@ -1,0 +1,34 @@
+name: Extract V108 Source for Review
+
+on:
+  push:
+    branches:
+      - audit/v108-review
+    paths:
+      - .github/workflows/v108-source-extract.yml
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out audit branch
+        uses: actions/checkout@v4
+      - name: Extract archive into isolated source branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          mkdir -p /tmp/tabibi-v108
+          unzip -q TABIBI_v108.zip -d /tmp/tabibi-v108
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan audit/v108-source-review
+          git rm -rf . >/dev/null 2>&1 || true
+          cp -a /tmp/tabibi-v108/. .
+          git add -A
+          git commit -m "Extract TABIBI V108 for isolated source review"
+          git push origin HEAD:audit/v108-source-review

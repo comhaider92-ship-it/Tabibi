@@ -35,6 +35,9 @@ if (source.includes(compatible)) {
   console.log('Applied Metro adapter with path-aware image-size v2 support.');
 } else if (!source.includes('image-size')) {
   console.log('Metro no longer depends on image-size; no compatibility patch is required.');
+} else if (source.includes('imageSize')) {
+  console.log('Metro already uses the imageSize API; no compatibility patch is required.');
+  console.log(source.split('\\n').filter((line) => line.includes('image-size') || line.includes('imageSize')));
 } else {
   throw new Error('Unsupported Metro image-size integration; refusing to patch an unknown version.');
 }

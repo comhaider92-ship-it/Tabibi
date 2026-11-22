@@ -1,0 +1,62 @@
+name: TABIBI security audit report
+on:
+  push:
+    branches:
+      - v109-development
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'mobile/package.json'
+      - 'mobile/package-lock.json'
+      - '.github/workflows/security-audit-report.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v109-development
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Audit backend and mobile
+        run: |
+          npm ci --ignore-scripts
+          npm audit --json > backend-audit.json || true
+          cd mobile
+          npm ci --ignore-scripts
+          npm audit --json > ../mobile-audit.json || true
+          cd ..
+      - name: Build readable report
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          function read(file, workspace) {
+            const a = JSON.parse(fs.readFileSync(file, 'utf8'));
+            const rows = Object.entries(a.vulnerabilities || {}).map(([name, v]) => {
+              const via = (v.via || []).map(x => typeof x === 'string' ? x : `${x.name}: ${x.title || x.url || 'advisory'} (${x.range || ''})`).join('; ');
+              const fix = typeof v.fixAvailable === 'object' ? JSON.stringify(v.fixAvailable) : String(v.fixAvailable);
+              return {name, severity:v.severity, direct:v.isDirect, range:v.range, via, fix};
+            });
+            return {workspace, totals:a.metadata?.vulnerabilities || {}, rows};
+          }
+          const reports = [read('backend-audit.json','Backend'), read('mobile-audit.json','Mobile')];
+          let md = '# TABIBI dependency security audit\n\nGenerated from branch v109-development. No dependency versions were changed by this workflow.\n';
+          for (const r of reports) {
+            md += `\n## ${r.workspace}\n\nTotals: ${JSON.stringify(r.totals)}\n\n`;
+            md += '| Package | Severity | Direct | Affected range | Fix available | Advisory details |\n|---|---|---:|---|---|---|\n';
+            for (const x of r.rows) md += `| ${x.name} | ${x.severity} | ${x.direct} | ${x.range} | ${x.fix} | ${x.via.replace(/\|/g,'/')} |\n`;
+            if (!r.rows.length) md += 'No vulnerable packages reported.\n';
+          }
+          fs.writeFileSync('SECURITY_AUDIT_DETAILS.md', md);
+          NODE
+      - name: Commit report to development branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add SECURITY_AUDIT_DETAILS.md
+          git commit -m "Add detailed dependency security report" || exit 0
+          git push origin HEAD:v109-development

@@ -13,13 +13,13 @@
     "check:migrations": "node scripts/check-migration-readiness.mjs"
   },
   "dependencies": {
-    "@nestjs/common": "^10.4.15",
-    "@nestjs/config": "^3.3.0",
-    "@nestjs/core": "^10.4.15",
-    "@nestjs/jwt": "^10.2.0",
-    "@nestjs/platform-express": "^10.4.15",
-    "@nestjs/schedule": "^4.1.2",
-    "@nestjs/typeorm": "^10.0.2",
+    "@nestjs/common": "^11.2.11",
+    "@nestjs/config": "^4.0.3",
+    "@nestjs/core": "^11.2.11",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/platform-express": "^11.2.11",
+    "@nestjs/schedule": "^5.0.1",
+    "@nestjs/typeorm": "^11.0.3",
     "bcrypt": "6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -32,8 +32,8 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
-    "@nestjs/cli": "12.0.15",
-    "@nestjs/schematics": "^10.2.3",
+    "@nestjs/cli": "^11.2.11",
+    "@nestjs/schematics": "^11.2.11",
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^4.17.21",
     "@types/node": "^22.10.2",

@@ -29,6 +29,11 @@ jobs:
         run: npm run build
       - name: Check database migrations
         run: npm run check:migrations
+      - name: Install and typecheck Android app
+        working-directory: mobile
+        run: |
+          npm ci --ignore-scripts
+          npm run typecheck
       - name: Check build readiness
         run: npm run check:build-readiness
       - name: Assert API security headers

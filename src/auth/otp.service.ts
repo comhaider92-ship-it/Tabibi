@@ -76,7 +76,7 @@ export class OtpService {
   const target=this.normalizeTarget(identifier);
   const user=await this.users.findByIdentifier(target);
   if(!user||!user.isActive) throw new BadRequestException('الرمز غير صالح أو منتهي الصلاحية');
-  const row=await this.repo.findOne({where:{userId:user.id,purpose,target,consumedAt:null,expiresAt:MoreThan(new Date())},
+  const row=await this.repo.findOne({where:{userId:user.id,purpose,target,consumedAt:IsNull(),expiresAt:MoreThan(new Date())},
    order:{createdAt:'DESC'},select:['id','userId','target','purpose','codeHash','expiresAt','consumedAt','attempts','createdAt']});
   if(!row||row.attempts>=this.maxAttempts) throw new BadRequestException('الرمز غير صالح أو منتهي الصلاحية');
   row.attempts+=1;

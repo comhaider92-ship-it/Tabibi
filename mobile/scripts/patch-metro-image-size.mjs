@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 const metroAssetsPath = fileURLToPath(new URL('../node_modules/metro/src/Assets.js', import.meta.url));
 const source = readFileSync(metroAssetsPath, 'utf8');
 const legacy = 'const getImageSize = require("image-size");';
+const metroPathInputLegacy = 'const dimensions = isImage ? (0, _imageSize.default)(isImageInput) : null;';
+const metroPathInputCompatible = 'const dimensions = isImage ? (0, _imageSize.default)(typeof isImageInput === "string" ? _fs.default.readFileSync(isImageInput) : isImageInput) : null;';
 const previous = [
   'const imageSizeModule = require("image-size");',
   'const imageSize = typeof imageSizeModule === "function" ? imageSizeModule : imageSizeModule.imageSize;',
@@ -25,7 +27,12 @@ const compatible = [
   '};',
 ].join('\n');
 
-if (source.includes(compatible)) {
+if (source.includes(metroPathInputCompatible)) {
+  console.log('Metro asset-path image-size adapter already applied.');
+} else if (source.includes(metroPathInputLegacy)) {
+  writeFileSync(metroAssetsPath, source.replace(metroPathInputLegacy, metroPathInputCompatible));
+  console.log('Patched Metro to read filesystem asset paths before image-size v2.');
+} else if (source.includes(compatible)) {
   console.log('Metro image-size compatibility patch already applied.');
 } else if (source.includes(previous)) {
   writeFileSync(metroAssetsPath, source.replace(previous, compatible));
@@ -33,6 +40,11 @@ if (source.includes(compatible)) {
 } else if (source.includes(legacy)) {
   writeFileSync(metroAssetsPath, source.replace(legacy, compatible));
   console.log('Applied Metro adapter with path-aware image-size v2 support.');
+} else if (!source.includes('image-size')) {
+  console.log('Metro no longer depends on image-size; no compatibility patch is required.');
+} else if (source.includes('imageSize')) {
+  console.log('Metro already uses the imageSize API; no compatibility patch is required.');
+  console.log(source.split('\\n').filter((line) => line.includes('image-size') || line.includes('imageSize')));
 } else {
-  throw new Error('Unsupported Metro Assets.js layout; refusing to patch an unknown version.');
+  throw new Error('Unsupported Metro image-size integration; refusing to patch an unknown version.');
 }

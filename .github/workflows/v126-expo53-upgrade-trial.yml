@@ -51,7 +51,8 @@ jobs:
         run: |
           node <<'NODE'
           const fs = require('node:fs');
-          const asset = require.resolve('@react-navigation/elements/lib/module/assets/back-icon-mask.png');
+          const path = require('node:path');
+          const asset = path.join(path.dirname(require.resolve('@react-navigation/elements')), 'assets', 'back-icon-mask.png');
           const buffer = fs.readFileSync(asset);
           const size = require('image-size').imageSize(buffer);
           console.log({ asset, bytes: buffer.length, size });

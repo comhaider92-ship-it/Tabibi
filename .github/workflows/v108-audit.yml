@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   audit:
@@ -83,6 +83,19 @@ jobs:
 
           echo >> "$REPORT"
           echo "Audit completed. Review all BUILD FAILED / TEST COMMAND FAILED / DEPENDENCY INSTALL FAILED markers." | tee -a "$REPORT"
+      - name: Publish extracted V108 source to isolated review branch
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan audit/v108-source-review
+          git rm -rf . >/dev/null 2>&1 || true
+          cp -a /tmp/tabibi-v108/. .
+          git add -A
+          git commit -m "Extract TABIBI V108 for isolated source review"
+          git push origin HEAD:audit/v108-source-review
       - name: Upload audit report and inventory
         if: always()
         uses: actions/upload-artifact@v4

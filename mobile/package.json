@@ -13,7 +13,8 @@
     "check:build-config": "node scripts/check-build-config.mjs preview",
     "check:build-config:production": "node scripts/check-build-config.mjs production",
     "build:android:preview:checked": "npm run check:build-config && eas build --platform android --profile preview",
-    "build:android:production:checked": "npm run check:build-config:production && eas build --platform android --profile production"
+    "build:android:production:checked": "npm run check:build-config:production && eas build --platform android --profile production",
+    "postinstall": "node scripts/patch-metro-image-size.mjs"
   },
   "dependencies": {
     "@react-navigation/native": "^7.0.14",

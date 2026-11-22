@@ -1,0 +1,61 @@
+name: TABIBI V117 current security patch compatibility trial
+on:
+  push:
+    branches:
+      - v117-current-security-patches-trial
+    paths:
+      - '.github/workflows/v117-current-security-patches-trial.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Backend current patched dependencies
+        run: |
+          npm install --save-exact nodemailer@10.6.1 --ignore-scripts
+          npm pkg set 'overrides.lodash=4.18.1' 'overrides.multer=2.5.0' 'overrides.body-parser=2.4.0'
+          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:migrations
+          npm audit --json > backend-audit-v117.json || true
+      - name: Mobile current patched dependencies
+        working-directory: mobile
+        run: |
+          npm pkg set 'overrides.postcss=8.5.33' 'overrides.image-size=2.1.0' 'overrides.@xmldom/xmldom=0.9.12' 'overrides.tar=7.5.21'
+          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm audit --json > ../mobile-audit-v117.json || true
+      - name: Summarize trial
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs=require('fs');const out=['# V117 current security patch trial','','Compatibility test only; no production branch changed.',''];
+          for(const [f,l] of [['backend-audit-v117.json','Backend'],['mobile-audit-v117.json','Mobile']]){
+            if(!fs.existsSync(f)){out.push('## '+l,'Audit not generated','');continue;}
+            const a=JSON.parse(fs.readFileSync(f,'utf8'));out.push('## '+l,'','Totals: '+JSON.stringify(a.metadata?.vulnerabilities||{}),'','| Package | Severity | Direct |','|---|---|---:|');
+            for(const [n,v] of Object.entries(a.vulnerabilities||{}))out.push('| '+n+' | '+v.severity+' | '+v.isDirect+' |');out.push('');
+          }fs.writeFileSync('V117_SECURITY_PATCH_TRIAL.md',out.join('\n'));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v117-security-patch-trial
+          path: |
+            V117_SECURITY_PATCH_TRIAL.md
+            backend-audit-v117.json
+            mobile-audit-v117.json
+            package.json
+            package-lock.json
+            mobile/package.json
+            mobile/package-lock.json
+          if-no-files-found: warn
+          retention-days: 14

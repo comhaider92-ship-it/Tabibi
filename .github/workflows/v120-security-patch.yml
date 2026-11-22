@@ -1,0 +1,69 @@
+name: TABIBI V120 apply verified high and critical security patches
+on:
+  push:
+    branches:
+      - v120-security-patch
+    paths:
+      - '.github/workflows/v120-security-patch.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  secure-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v120-security-patch
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Apply backend patched dependencies
+        run: |
+          npm install --save-exact nodemailer@10.6.1 --ignore-scripts
+          npm install --save-dev --save-exact @nestjs/cli@12.0.15 --ignore-scripts
+          npm pkg set 'overrides.lodash=4.18.1' 'overrides.multer=2.5.0' 'overrides.body-parser=2.4.0' 'overrides.glob=14.0.6' 'overrides.picomatch=4.0.7' 'overrides.tmp=0.2.7'
+          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:migrations
+          npm audit --json > backend-audit-v120.json || true
+      - name: Apply mobile patched dependencies
+        working-directory: mobile
+        run: |
+          npm pkg set 'overrides.postcss=8.5.33' 'overrides.image-size=2.1.0' 'overrides.@xmldom/xmldom=0.9.12' 'overrides.tar=7.5.21'
+          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm audit --json > ../mobile-audit-v120.json || true
+      - name: Final readiness
+        run: npm run check:build-readiness
+      - name: Commit tested lockfiles and manifests
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json mobile/package.json mobile/package-lock.json
+          git commit -m "Apply tested V120 dependency security patches"
+          git push origin HEAD:v120-security-patch
+      - name: Create audit summary
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs=require('fs');const out=['# V120 security patch audit','','All changes are isolated on v120-security-patch. Build and compatibility checks are recorded in the workflow run.',''];
+          for(const [f,l] of [['backend-audit-v120.json','Backend'],['mobile-audit-v120.json','Mobile']]){
+            if(!fs.existsSync(f)){out.push('## '+l,'Audit not generated','');continue;}
+            const a=JSON.parse(fs.readFileSync(f,'utf8'));out.push('## '+l,'','Totals: '+JSON.stringify(a.metadata?.vulnerabilities||{}),'','| Package | Severity |','|---|---|');
+            for(const [n,v] of Object.entries(a.vulnerabilities||{}))out.push('| '+n+' | '+v.severity+' |');out.push('');
+          }fs.writeFileSync('V120_SECURITY_AUDIT.md',out.join('\n'));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v120-security-evidence
+          path: |
+            V120_SECURITY_AUDIT.md
+            backend-audit-v120.json
+            mobile-audit-v120.json
+          if-no-files-found: warn
+          retention-days: 30

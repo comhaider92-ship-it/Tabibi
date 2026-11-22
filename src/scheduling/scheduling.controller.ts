@@ -1,0 +1,15 @@
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'; import { RolesGuard } from '../auth/roles.guard'; import { Roles } from '../auth/roles.decorator'; import { CurrentUser } from '../auth/current-user.decorator'; import { UserRole } from '../users/user.entity';
+import { SchedulingService } from './scheduling.service'; import { CreateSlotsDto } from './dto/create-slots.dto'; import { UpdateSlotDto } from './dto/update-slot.dto'; import { SaveWeeklyScheduleDto } from './dto/weekly-schedule.dto'; import { CreateScheduleExceptionDto } from './dto/create-schedule-exception.dto';
+@Controller('doctors') export class SchedulingController { constructor(private service:SchedulingService){}
+ @Get(':doctorId/available-slots') available(@Param('doctorId',new ParseUUIDPipe()) doctorId:string,@Query('from') from?:string,@Query('to') to?:string){ return this.service.publicOpen(doctorId,from,to); }
+ @Get('me/availability-slots') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.DOCTOR) mySlots(@CurrentUser() u:{sub:string},@Query('from') from?:string,@Query('to') to?:string){return this.service.mySlots(u.sub,from,to);}
+ @Get('me/weekly-schedule') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.DOCTOR) myWeekly(@CurrentUser() u:{sub:string}){return this.service.myWeeklySchedule(u.sub);}
+ @Post('me/weekly-schedule') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.DOCTOR) saveWeekly(@CurrentUser() u:{sub:string},@Body() dto:SaveWeeklyScheduleDto){return this.service.saveWeeklySchedule(u.sub,dto);}
+ @Get('me/schedule-exceptions') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.DOCTOR) exceptions(@CurrentUser() u:{sub:string}){return this.service.myDoctorExceptions(u.sub);}
+ @Post('me/schedule-exceptions') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.DOCTOR) createException(@CurrentUser() u:{sub:string},@Body() dto:CreateScheduleExceptionDto){return this.service.createDoctorException(u.sub,dto);}
+ @Patch('me/schedule-exceptions/:id/restore') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.DOCTOR) restoreException(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string){return this.service.removeDoctorException(u.sub,id);}
+ @Post('me/availability-slots') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.DOCTOR) create(@CurrentUser() u:{sub:string},@Body() dto:CreateSlotsDto){ return this.service.createMany(u.sub,dto.slots); }
+ @Patch('me/availability-slots/:id') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.DOCTOR) update(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Body() dto:UpdateSlotDto){return this.service.update(u.sub,id,dto);}
+ @Patch('me/availability-slots/bulk/:status') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.DOCTOR) bulk(@CurrentUser() u:{sub:string},@Param('status') status:'open'|'closed',@Body() body:{ids:string[]}){ if(!['open','closed'].includes(status)) throw new Error('Invalid status'); return this.service.updateMany(u.sub,body.ids,status); }
+}

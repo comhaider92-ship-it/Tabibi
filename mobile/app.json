@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "طبيبي",
+    "slug": "tabibi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "iq.tabibi.app",
+      "versionCode": 1
+    },
+    "ios": {
+      "bundleIdentifier": "iq.tabibi.app"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications"
+    ]
+  }
+}

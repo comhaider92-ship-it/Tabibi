@@ -37,6 +37,12 @@ jobs:
       - name: Mobile TypeScript check
         working-directory: mobile
         run: npm run typecheck
+      - name: Diagnose image-size module resolution
+        working-directory: mobile
+        run: |
+          npm ls image-size || true
+          node -e "const m=require('image-size'); console.log('image-size exports:', Object.keys(m))"
+          grep -R "getImageSize" node_modules/metro node_modules/@expo node_modules/@react-navigation -n --include='*.js' | head -60 || true
       - name: Export Android JavaScript bundle
         working-directory: mobile
         run: npx expo export --platform android

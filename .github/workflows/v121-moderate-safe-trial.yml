@@ -1,4 +1,5 @@
 name: TABIBI V121 isolated moderate dependency trial
+# Triggered workflow definition on the isolated trial branch.
 on:
   push:
     branches:

@@ -1,0 +1,65 @@
+name: TABIBI V113 apply verified critical fixes
+on:
+  push:
+    branches:
+      - v113-security-patch
+    paths:
+      - '.github/workflows/v113-security-patch.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify-and-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v113-security-patch
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Apply verified backend bcrypt fix
+        run: |
+          npm install --save-exact bcrypt@6.0.0 --ignore-scripts
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:migrations
+          npm audit --json > backend-audit-v113.json || true
+          npm ls tar --all > backend-tar-tree-v113.txt 2>&1 || true
+      - name: Apply verified mobile tar patch
+        working-directory: mobile
+        run: |
+          npm pkg set 'overrides.tar=7.5.21'
+          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm audit --json > ../mobile-audit-v113.json || true
+          npm ls tar --all > ../mobile-tar-tree-v113.txt 2>&1 || true
+      - name: Final build readiness
+        run: npm run check:build-readiness
+      - name: Commit tested dependency files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json mobile/package.json mobile/package-lock.json
+          if git diff --cached --quiet; then
+            echo "No dependency changes to commit"
+          else
+            git commit -m "Apply verified critical dependency fixes"
+            git push origin HEAD:v113-security-patch
+          fi
+      - name: Upload V113 audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tabibi-v113-security-evidence
+          path: |
+            backend-audit-v113.json
+            mobile-audit-v113.json
+            backend-tar-tree-v113.txt
+            mobile-tar-tree-v113.txt
+          if-no-files-found: warn
+          retention-days: 14

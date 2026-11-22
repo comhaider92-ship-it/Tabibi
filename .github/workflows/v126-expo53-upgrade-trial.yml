@@ -46,8 +46,20 @@ jobs:
           npm ls image-size || true
           node -e "const m=require('image-size'); console.log('image-size exports:', Object.keys(m))"
           grep -R "getImageSize" node_modules/metro node_modules/@expo node_modules/@react-navigation -n --include='*.js' | head -60 || true
+      - name: Verify image-size adapter against navigation assets
+        working-directory: mobile
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const asset = require.resolve('@react-navigation/elements/lib/module/assets/back-icon-mask.png');
+          const buffer = fs.readFileSync(asset);
+          const size = require('image-size').imageSize(buffer);
+          console.log({ asset, bytes: buffer.length, size });
+          NODE
       - name: Export Android JavaScript bundle
         working-directory: mobile
+        env:
+          EXPO_DEBUG: '1'
         run: npx expo export --platform android
       - name: Check backend readiness
         run: |

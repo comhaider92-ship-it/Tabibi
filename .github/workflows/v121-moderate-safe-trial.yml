@@ -1,0 +1,70 @@
+name: TABIBI V121 isolated moderate dependency trial
+on:
+  push:
+    branches:
+      - v121-moderate-safe-trial
+    paths:
+      - '.github/workflows/v121-moderate-safe-trial.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v121-moderate-safe-trial
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Trial same-major backend overrides only
+        run: |
+          npm pkg set 'overrides.qs=6.16.1' 'overrides.ajv=8.18.0'
+          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:migrations
+          npm audit --json > backend-audit-v121.json || true
+      - name: Verify mobile unchanged
+        working-directory: mobile
+        run: |
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm audit --json > ../mobile-audit-v121.json || true
+      - name: Verify project readiness
+        run: npm run check:build-readiness
+      - name: Commit only tested backend dependency files
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "Trial same-major moderate dependency remediations"
+          git push origin HEAD:v121-moderate-safe-trial
+      - name: Create trial report
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const out=['# V121 isolated moderate dependency trial','','Only same-major backend overrides for qs 6.16.1 and ajv 8.18.0 were trialed. Mobile framework versions were not changed.',''];
+          for(const [f,l] of [['backend-audit-v121.json','Backend'],['mobile-audit-v121.json','Mobile']]){
+            if(!fs.existsSync(f)){out.push('## '+l,'Audit not generated; an earlier validation step may have failed.','');continue;}
+            const a=JSON.parse(fs.readFileSync(f,'utf8'));
+            out.push('## '+l,'','Totals: '+JSON.stringify(a.metadata?.vulnerabilities||{}),'','| Package | Severity |','|---|---|');
+            for(const [n,v] of Object.entries(a.vulnerabilities||{}))out.push('| '+n+' | '+v.severity+' |');
+            out.push('');
+          }
+          fs.writeFileSync('V121_MODERATE_TRIAL.md',out.join('\n'));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v121-moderate-trial-evidence
+          path: |
+            V121_MODERATE_TRIAL.md
+            backend-audit-v121.json
+            mobile-audit-v121.json
+          if-no-files-found: warn
+          retention-days: 30

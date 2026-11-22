@@ -1,0 +1,13 @@
+import { MigrationInterface, QueryRunner } from 'typeorm';
+export class MessageSafetyAndMute1733200000000 implements MigrationInterface {
+ name='MessageSafetyAndMute1733200000000';
+ public async up(q:QueryRunner):Promise<void>{
+  await q.query(`CREATE TABLE "booking_conversation_mutes" ("id" uuid NOT NULL DEFAULT gen_random_uuid(),"userId" uuid NOT NULL,"appointmentId" uuid,"facilityBookingId" uuid,"createdAt" timestamptz NOT NULL DEFAULT now(),"updatedAt" timestamptz NOT NULL DEFAULT now(),CONSTRAINT "PK_booking_conversation_mutes" PRIMARY KEY("id"),CONSTRAINT "CK_booking_conversation_mutes_one_booking" CHECK (("appointmentId" IS NOT NULL AND "facilityBookingId" IS NULL) OR ("appointmentId" IS NULL AND "facilityBookingId" IS NOT NULL)),CONSTRAINT "FK_booking_conversation_mutes_user" FOREIGN KEY("userId") REFERENCES "users"("id") ON DELETE CASCADE,CONSTRAINT "FK_booking_conversation_mutes_appointment" FOREIGN KEY("appointmentId") REFERENCES "appointments"("id") ON DELETE CASCADE,CONSTRAINT "FK_booking_conversation_mutes_facility" FOREIGN KEY("facilityBookingId") REFERENCES "facility_bookings"("id") ON DELETE CASCADE)`);
+  await q.query(`CREATE UNIQUE INDEX "uq_booking_mute_user_appointment" ON "booking_conversation_mutes"("userId","appointmentId") WHERE "appointmentId" IS NOT NULL`);
+  await q.query(`CREATE UNIQUE INDEX "uq_booking_mute_user_facility" ON "booking_conversation_mutes"("userId","facilityBookingId") WHERE "facilityBookingId" IS NOT NULL`);
+  await q.query(`CREATE TABLE "booking_message_reports" ("id" uuid NOT NULL DEFAULT gen_random_uuid(),"messageId" uuid NOT NULL,"reporterUserId" uuid NOT NULL,"reason" varchar(500) NOT NULL,"status" varchar(20) NOT NULL DEFAULT 'pending',"ownerNote" varchar(1000),"createdAt" timestamptz NOT NULL DEFAULT now(),"updatedAt" timestamptz NOT NULL DEFAULT now(),CONSTRAINT "PK_booking_message_reports" PRIMARY KEY("id"),CONSTRAINT "FK_booking_message_reports_message" FOREIGN KEY("messageId") REFERENCES "booking_messages"("id") ON DELETE CASCADE,CONSTRAINT "FK_booking_message_reports_reporter" FOREIGN KEY("reporterUserId") REFERENCES "users"("id") ON DELETE CASCADE)`);
+  await q.query(`CREATE UNIQUE INDEX "uq_booking_message_reports_reporter_message" ON "booking_message_reports"("messageId","reporterUserId")`);
+  await q.query(`CREATE INDEX "ix_booking_message_reports_status_created" ON "booking_message_reports"("status","createdAt")`);
+ }
+ public async down(q:QueryRunner):Promise<void>{await q.query(`DROP TABLE IF EXISTS "booking_message_reports"`);await q.query(`DROP TABLE IF EXISTS "booking_conversation_mutes"`);}
+}

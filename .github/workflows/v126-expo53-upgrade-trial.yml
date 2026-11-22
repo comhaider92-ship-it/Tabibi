@@ -53,10 +53,13 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs');
           const path = require('node:path');
-          const asset = path.join(path.dirname(require.resolve('@react-navigation/elements')), 'assets', 'back-icon-mask.png');
-          const buffer = fs.readFileSync(asset);
-          const size = require('image-size').imageSize(buffer);
-          console.log({ asset, bytes: buffer.length, size });
+          const base = path.join(path.dirname(require.resolve('@react-navigation/elements')), 'assets');
+          for (const name of ['back-icon-mask.png', 'back-icon.png']) {
+            const asset = path.join(base, name);
+            const buffer = fs.readFileSync(asset);
+            const size = require('image-size').imageSize(buffer);
+            console.log({ asset, bytes: buffer.length, firstBytes: buffer.subarray(0, 16).toString('hex'), size });
+          }
           NODE
       - name: Export Android JavaScript bundle
         working-directory: mobile

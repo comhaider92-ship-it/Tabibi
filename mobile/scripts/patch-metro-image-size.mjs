@@ -7,11 +7,6 @@ const legacy = 'const getImageSize = require("image-size");';
 const previous = [
   'const imageSizeModule = require("image-size");',
   'const imageSize = typeof imageSizeModule === "function" ? imageSizeModule : imageSizeModule.imageSize;',
-  'const getImageSize = (input) => imageSize(Buffer.isBuffer(input) ? input : Buffer.from(input));',
-].join('\n');
-const compatible = [
-  'const imageSizeModule = require("image-size");',
-  'const imageSize = typeof imageSizeModule === "function" ? imageSizeModule : imageSizeModule.imageSize;',
   'const getImageSize = (input) => {',
   '  const bytes = Buffer.isBuffer(input) ? input : Buffer.from(input);',
   '  try { return imageSize(bytes); }',
@@ -21,15 +16,23 @@ const compatible = [
   '  }',
   '};',
 ].join('\n');
+const compatible = [
+  'const imageSizeModule = require("image-size");',
+  'const imageSize = typeof imageSizeModule === "function" ? imageSizeModule : imageSizeModule.imageSize;',
+  'const getImageSize = (input) => {',
+  '  const bytes = typeof input === "string" ? require("node:fs").readFileSync(input) : (Buffer.isBuffer(input) ? input : Buffer.from(input));',
+  '  return imageSize(bytes);',
+  '};',
+].join('\n');
 
 if (source.includes(compatible)) {
   console.log('Metro image-size compatibility patch already applied.');
 } else if (source.includes(previous)) {
   writeFileSync(metroAssetsPath, source.replace(previous, compatible));
-  console.log('Updated Metro adapter with diagnostics for image-size v2.');
+  console.log('Updated Metro adapter to read asset paths as bytes for image-size v2.');
 } else if (source.includes(legacy)) {
   writeFileSync(metroAssetsPath, source.replace(legacy, compatible));
-  console.log('Applied Metro adapter with image-size v2 byte diagnostics.');
+  console.log('Applied Metro adapter with path-aware image-size v2 support.');
 } else {
   throw new Error('Unsupported Metro Assets.js layout; refusing to patch an unknown version.');
 }

@@ -22,7 +22,7 @@ jobs:
           node-version: '20'
       - name: Apply backend semver-safe audit fixes
         run: |
-          npm audit fix --ignore-scripts
+          npm audit fix --ignore-scripts || echo "Backend audit fix left semver-breaking advisories; continuing with safe updates only."
           npm ci --ignore-scripts
           npm run build
           npm run check:migrations
@@ -30,7 +30,7 @@ jobs:
       - name: Apply mobile semver-safe audit fixes
         working-directory: mobile
         run: |
-          npm audit fix --ignore-scripts
+          npm audit fix --ignore-scripts || echo "Mobile audit fix left semver-breaking advisories; continuing with safe updates only."
           npm ci --ignore-scripts
           npm run typecheck
           npm audit --json > ../mobile-audit-v122.json || true

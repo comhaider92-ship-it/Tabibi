@@ -105,9 +105,9 @@ import { MedicalRecordsModule } from './medical-records/medical-records.module';
    },
   }),
   TypeOrmModule.forRootAsync({ inject:[ConfigService], useFactory:(c:ConfigService)=>({
-   type:'postgres' as const, host:c.get('DATABASE_HOST','localhost'), port:Number(c.get('DATABASE_PORT','5432')),
-   username:c.get('DATABASE_USER','postgres'), password:c.get('DATABASE_PASSWORD',''),
-   database:c.get('DATABASE_NAME','tabibi'), entities:[User,Appointment,AppointmentStatusHistory,AuthOtp,LoginSecurityEvent,AuthSession,DoctorProfile,AvailabilitySlot,Notification,NotificationDeviceToken,NotificationPreference,AppointmentReminder,DoctorRating,MedicalFacility,FacilityService,FacilityBooking,FacilityAvailabilitySlot,WeeklyScheduleRule,ScheduleException,DoctorSubscription,OwnerAuditLog,Advertisement,BookingMessage,BookingConversationMute,BookingMessageReport,UploadAsset,MedicalRecord,MedicalRecordAccessLog,MedicalRecordAttachment,MedicalRecordShareConsent,MedicalPrescription,MedicalLabResult,MedicalClinicalReport], synchronize:false,
+   type:'postgres' as const, host:c.get<string>('DATABASE_HOST','localhost'), port:Number(c.get<string>('DATABASE_PORT','5432')),
+   username:c.get<string>('DATABASE_USER','postgres'), password:c.get<string>('DATABASE_PASSWORD',''),
+   database:c.get<string>('DATABASE_NAME','tabibi'), entities:[User,Appointment,AppointmentStatusHistory,AuthOtp,LoginSecurityEvent,AuthSession,DoctorProfile,AvailabilitySlot,Notification,NotificationDeviceToken,NotificationPreference,AppointmentReminder,DoctorRating,MedicalFacility,FacilityService,FacilityBooking,FacilityAvailabilitySlot,WeeklyScheduleRule,ScheduleException,DoctorSubscription,OwnerAuditLog,Advertisement,BookingMessage,BookingConversationMute,BookingMessageReport,UploadAsset,MedicalRecord,MedicalRecordAccessLog,MedicalRecordAttachment,MedicalRecordShareConsent,MedicalPrescription,MedicalLabResult,MedicalClinicalReport], synchronize:false,
   })}),
   JwtModule.registerAsync({ global:true, inject:[ConfigService], useFactory:(c:ConfigService)=>({
    secret:c.get<string>('JWT_SECRET'), signOptions:{ expiresIn:c.get<string>('JWT_EXPIRES_IN','30m') as any },

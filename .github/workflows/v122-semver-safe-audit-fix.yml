@@ -1,0 +1,70 @@
+name: TABIBI V122 semver-safe moderate remediation trial
+on:
+  push:
+    branches:
+      - v122-semver-safe-audit-fix
+    paths:
+      - '.github/workflows/v122-semver-safe-audit-fix.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  semver-safe-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v122-semver-safe-audit-fix
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Apply backend semver-safe audit fixes
+        run: |
+          npm audit fix --ignore-scripts
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:migrations
+          npm audit --json > backend-audit-v122.json || true
+      - name: Apply mobile semver-safe audit fixes
+        working-directory: mobile
+        run: |
+          npm audit fix --ignore-scripts
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm audit --json > ../mobile-audit-v122.json || true
+      - name: Verify project readiness
+        run: npm run check:build-readiness
+      - name: Commit tested dependency lockfiles
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json mobile/package.json mobile/package-lock.json
+          git commit -m "Apply semver-safe dependency audit fixes"
+          git push origin HEAD:v122-semver-safe-audit-fix
+      - name: Create audit report
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const out=['# V122 semver-safe audit remediation trial','','Ran npm audit fix without --force in backend and mobile. No intentional major framework upgrade was requested.',''];
+          for(const [f,l] of [['backend-audit-v122.json','Backend'],['mobile-audit-v122.json','Mobile']]){
+            if(!fs.existsSync(f)){out.push('## '+l,'Audit not generated; an earlier validation step may have failed.','');continue;}
+            const a=JSON.parse(fs.readFileSync(f,'utf8'));
+            out.push('## '+l,'','Totals: '+JSON.stringify(a.metadata?.vulnerabilities||{}),'','| Package | Severity |','|---|---|');
+            for(const [n,v] of Object.entries(a.vulnerabilities||{}))out.push('| '+n+' | '+v.severity+' |');
+            out.push('');
+          }
+          fs.writeFileSync('V122_SEMVER_SAFE_AUDIT.md',out.join('\n'));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v122-semver-safe-evidence
+          path: |
+            V122_SEMVER_SAFE_AUDIT.md
+            backend-audit-v122.json
+            mobile-audit-v122.json
+          if-no-files-found: warn
+          retention-days: 30

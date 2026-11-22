@@ -1,4 +1,5 @@
 name: TABIBI V122 semver-safe moderate remediation trial
+# Executed only on the isolated V122 trial branch.
 on:
   push:
     branches:

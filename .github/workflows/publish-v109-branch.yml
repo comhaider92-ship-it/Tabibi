@@ -1,0 +1,32 @@
+name: Publish V109 Review Branch
+
+on:
+  push:
+    branches:
+      - audit/v108-source-review
+    paths:
+      - '.github/workflows/publish-v109-branch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create branch based on main with V109 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tabibi-v109-source
+          git archive HEAD | tar -x -C /tmp/tabibi-v109-source
+          git fetch origin main
+          git checkout -B v109-development origin/main
+          cp -a /tmp/tabibi-v109-source/. .
+          git add -A
+          git add -f src/uploads TABIBI_v109.zip
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add TABIBI V109 development candidate"
+          git push origin HEAD:v109-development

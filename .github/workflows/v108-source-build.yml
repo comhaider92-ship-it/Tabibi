@@ -1,0 +1,37 @@
+name: V108 Source Build Check
+
+on:
+  push:
+    branches:
+      - audit/v108-source-review
+    paths:
+      - '.github/workflows/v108-source-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install backend dependencies
+        run: npm install --ignore-scripts --package-lock=false
+      - name: Compile NestJS backend
+        run: npm run build
+      - name: Run repository readiness checks
+        run: |
+          npm run check:build-readiness
+          npm run check:migrations
+      - name: Confirm test configuration
+        shell: bash
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.scripts?.test?0:1)"; then
+            CI=true npm test -- --runInBand
+          else
+            echo "No test script is declared in V108."
+          fi

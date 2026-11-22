@@ -1,0 +1,94 @@
+name: TABIBI V128 Expo SDK 55 migration trial
+on:
+  push:
+    branches:
+      - v128-expo55-upgrade-trial
+    paths:
+      - 'mobile/package.json'
+      - 'mobile/package-lock.json'
+      - 'mobile/app.json'
+      - 'mobile/src/**'
+      - 'mobile/scripts/**'
+      - '.github/workflows/v128-expo55-upgrade-trial.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  expo54:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v128-expo55-upgrade-trial
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+      - name: Install Expo SDK 55 base
+        working-directory: mobile
+        run: npm install expo@~55.0.0 --ignore-scripts --no-audit --no-fund
+      - name: Align native dependencies to Expo SDK 55
+        working-directory: mobile
+        run: npx expo install --fix
+      - name: Reconcile and install locked mobile dependencies
+        working-directory: mobile
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Apply Metro image-size compatibility patch
+        working-directory: mobile
+        run: node scripts/patch-metro-image-size.mjs
+      - name: Verify Expo dependency compatibility
+        working-directory: mobile
+        run: npx expo-doctor
+      - name: Mobile TypeScript check
+        working-directory: mobile
+        run: npm run typecheck
+      - name: Diagnose image-size module resolution
+        working-directory: mobile
+        run: |
+          npm ls image-size || true
+          node -e "const m=require('image-size'); console.log('image-size exports:', Object.keys(m))"
+          grep -R "getImageSize" node_modules/metro node_modules/@expo node_modules/@react-navigation -n --include='*.js' | head -60 || true
+      - name: Verify image-size adapter against navigation assets
+        working-directory: mobile
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const base = path.join(path.dirname(require.resolve('@react-navigation/elements')), 'assets');
+          for (const name of ['back-icon-mask.png', 'back-icon.png']) {
+            const asset = path.join(base, name);
+            const buffer = fs.readFileSync(asset);
+            const size = require('image-size').imageSize(buffer);
+            console.log({ asset, bytes: buffer.length, firstBytes: buffer.subarray(0, 16).toString('hex'), size });
+          }
+          NODE
+      - name: Export Android JavaScript bundle
+        working-directory: mobile
+        env:
+          EXPO_DEBUG: '1'
+        run: npx expo export --platform android
+      - name: Check backend readiness
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:migrations
+          npm run check:build-readiness
+      - name: Capture mobile dependency audit
+        if: always()
+        working-directory: mobile
+        run: npm audit --json > ../mobile-audit-v128.json || true
+      - name: Commit tested Expo SDK 55 lockfiles
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/package.json mobile/package-lock.json
+          git commit -m "Upgrade mobile app to Expo SDK 55"
+          git push origin HEAD:v128-expo55-upgrade-trial
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v128-expo55-evidence
+          path: mobile-audit-v128.json
+          if-no-files-found: warn
+          retention-days: 30

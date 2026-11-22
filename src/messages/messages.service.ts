@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { BookingMessage } from './message.entity';
 import { Appointment } from '../appointments/appointment.entity';
 import { FacilityBooking } from '../facilities/facility-booking.entity';
@@ -50,7 +50,7 @@ export class MessagesService {
  async sendAppointment(id:string,user:{sub:string;role:UserRole},body:string){const {recipientId}=await this.appointmentParticipants(id,user.sub,user.role);return this.save({appointmentId:id,facilityBookingId:null,senderUserId:user.sub,recipientUserId:recipientId},body);}
  async listFacility(id:string,user:{sub:string;role:UserRole}){await this.facilityParticipants(id,user.sub,user.role);return this.listFor({facilityBookingId:id},user.sub);}
  async sendFacility(id:string,user:{sub:string;role:UserRole},body:string){const {recipientId}=await this.facilityParticipants(id,user.sub,user.role);return this.save({appointmentId:null,facilityBookingId:id,senderUserId:user.sub,recipientUserId:recipientId},body);}
- private async save(data:Partial<BookingMessage>,body:string){const clean=body.trim();if(!clean)throw new BadRequestException('اكتب نص الرسالة أولاً');if(clean.length>1000)throw new BadRequestException('الرسالة أطول من الحد المسموح');const message=await this.messages.save(this.messages.create({...data,body:clean,readAt:null}));const sender=await this.users.findOne({where:{id:message.senderUserId},select:{id:true,displayName:true,role:true}});const mute=await this.mutes.findOne({where:{userId:message.recipientUserId,...(message.appointmentId?{appointmentId:message.appointmentId}:{facilityBookingId:message.facilityBookingId})}});if(!mute)await this.notifications.createAndDispatch({userId:message.recipientUserId,type:NotificationType.BOOKING_MESSAGE_RECEIVED,title:'رسالة جديدة بخصوص حجزك',body:'لديك رسالة جديدة بخصوص أحد حجوزاتك. افتح تطبيق طبيبي لقراءتها.',data:{messageId:message.id,...(message.appointmentId?{appointmentId:message.appointmentId}:{facilityBookingId:message.facilityBookingId}),kind:message.appointmentId?'doctor':'facility'}});return {...message,sender:sender?{displayName:sender.displayName,role:sender.role}:null};}
+ private async save(data:Partial<BookingMessage>,body:string){const clean=body.trim();if(!clean)throw new BadRequestException('اكتب نص الرسالة أولاً');if(clean.length>1000)throw new BadRequestException('الرسالة أطول من الحد المسموح');const message=await this.messages.save(this.messages.create({...data,body:clean,readAt:null}));const sender=await this.users.findOne({where:{id:message.senderUserId},select:{id:true,displayName:true,role:true}});const mute=message.appointmentId?await this.mutes.findOne({where:{userId:message.recipientUserId,appointmentId:message.appointmentId}}):message.facilityBookingId?await this.mutes.findOne({where:{userId:message.recipientUserId,facilityBookingId:message.facilityBookingId}}):null;if(!mute)await this.notifications.createAndDispatch({userId:message.recipientUserId,type:NotificationType.BOOKING_MESSAGE_RECEIVED,title:'رسالة جديدة بخصوص حجزك',body:'لديك رسالة جديدة بخصوص أحد حجوزاتك. افتح تطبيق طبيبي لقراءتها.',data:{messageId:message.id,...(message.appointmentId?{appointmentId:message.appointmentId}:{facilityBookingId:message.facilityBookingId}),kind:message.appointmentId?'doctor':'facility'}});return {...message,sender:sender?{displayName:sender.displayName,role:sender.role}:null};}
  async setMute(kind:'doctor'|'facility',id:string,user:{sub:string;role:UserRole},muted:boolean){
   if(kind==='doctor')await this.appointmentParticipants(id,user.sub,user.role);else await this.facilityParticipants(id,user.sub,user.role);
   const where={userId:user.sub,...(kind==='doctor'?{appointmentId:id}:{facilityBookingId:id})};
@@ -61,7 +61,7 @@ export class MessagesService {
  }
  async unreadCount(kind:'doctor'|'facility',id:string,user:{sub:string;role:UserRole}){
   if(kind==='doctor')await this.appointmentParticipants(id,user.sub,user.role);else await this.facilityParticipants(id,user.sub,user.role);
-  return {unreadCount:await this.messages.count({where:{...(kind==='doctor'?{appointmentId:id}:{facilityBookingId:id}),recipientUserId:user.sub,readAt:null}})};
+  return {unreadCount:await this.messages.count({where:{...(kind==='doctor'?{appointmentId:id}:{facilityBookingId:id}),recipientUserId:user.sub,readAt:IsNull()}})};
  }
  async reportMessage(messageId:string,user:{sub:string;role:UserRole},reason:string){
   const message=await this.messages.findOne({where:{id:messageId}});if(!message)throw new NotFoundException('الرسالة غير موجودة');

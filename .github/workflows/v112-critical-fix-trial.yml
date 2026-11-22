@@ -23,7 +23,6 @@ jobs:
           npm install --save-exact bcrypt@6.0.0 --ignore-scripts
           npm ci --ignore-scripts
           npm run build
-          npm run check:build-readiness
           npm run check:migrations
           npm audit --json > backend-audit-v112.json || true
       - name: Trial mobile tar patched override
@@ -33,7 +32,9 @@ jobs:
           npm install --package-lock-only --ignore-scripts
           npm ci --ignore-scripts
           npm run typecheck
-          npm audit --json > ../mobile-audit-v112.json || true
+          cd ..
+          npm run check:build-readiness
+          npm audit --json > mobile-audit-v112.json || true
       - name: Summarize trial results
         if: always()
         run: |

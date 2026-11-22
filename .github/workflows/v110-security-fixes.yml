@@ -1,0 +1,80 @@
+name: TABIBI V110 safe security fixes
+on:
+  push:
+    branches:
+      - v110-security-fixes
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'mobile/package.json'
+      - 'mobile/package-lock.json'
+      - '.github/workflows/v110-security-fixes.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  safe-fixes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v110-security-fixes
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install baseline dependencies
+        run: npm ci --ignore-scripts
+      - name: Apply backend semver-safe fixes only
+        run: npm audit fix --ignore-scripts || true
+      - name: Apply mobile semver-safe fixes only
+        working-directory: mobile
+        run: npm ci --ignore-scripts && npm audit fix --ignore-scripts || true
+      - name: Reinstall from updated lockfiles
+        run: |
+          npm ci --ignore-scripts
+          cd mobile
+          npm ci --ignore-scripts
+      - name: Verify backend build
+        run: npm run build
+      - name: Verify mobile types
+        working-directory: mobile
+        run: npm run typecheck
+      - name: Verify readiness and migrations
+        run: |
+          npm run check:build-readiness
+          npm run check:migrations
+      - name: Create post-fix security report
+        if: always()
+        run: |
+          npm audit --json > backend-audit-v110.json || true
+          (cd mobile && npm audit --json > ../mobile-audit-v110.json) || true
+          node <<'NODE'
+          const fs = require('fs');
+          let md = '# TABIBI V110 safe security-fix report\n\nOnly npm audit fix without --force was used. Major-version upgrades were not forced.\n';
+          for (const [file, label] of [['backend-audit-v110.json','Backend'],['mobile-audit-v110.json','Mobile']]) {
+            if (!fs.existsSync(file)) continue;
+            const a = JSON.parse(fs.readFileSync(file,'utf8'));
+            md += `\n## ${label}\n\nTotals: ${JSON.stringify(a.metadata?.vulnerabilities || {})}\n\n| Package | Severity | Direct | Fix available |\n|---|---|---:|---|\n`;
+            for (const [name,v] of Object.entries(a.vulnerabilities || {})) md += `| ${name} | ${v.severity} | ${v.isDirect} | ${typeof v.fixAvailable === 'object' ? JSON.stringify(v.fixAvailable) : String(v.fixAvailable)} |\n`;
+          }
+          fs.writeFileSync('SECURITY_AUDIT_V110.md', md);
+          NODE
+      - name: Commit verified safe updates
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json mobile/package-lock.json SECURITY_AUDIT_V110.md
+          git commit -m "Apply semver-safe dependency security fixes for V110" || exit 0
+          git push origin HEAD:v110-security-fixes
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v110-security-verification
+          path: |
+            SECURITY_AUDIT_V110.md
+            backend-audit-v110.json
+            mobile-audit-v110.json
+          if-no-files-found: warn
+          retention-days: 14

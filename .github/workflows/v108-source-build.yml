@@ -1,4 +1,4 @@
-name: V108 Source Build Check
+name: V109 Build and Package
 
 on:
   push:
@@ -63,31 +63,13 @@ jobs:
           else
             echo "No test script is declared in V108."
           fi
-
       - name: Package V109 development candidate
         shell: bash
         run: |
           git archive --format=zip --prefix=TABIBI_v109/ --output=TABIBI_v109.zip HEAD -- . ':(exclude)TABIBI_v109.zip'
           unzip -t TABIBI_v109.zip
           test -s TABIBI_v109.zip
-          unzip -Z1 TABIBI_v109.zip | grep -q '^TABIBI_v109/src/uploads/upload-asset.entity.ts
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Package TABIBI V109 development candidate"
-          git push origin HEAD:audit/v108-source-review
-      - name: Upload dependency audit reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: tabibi-v108-dependency-audit
-          path: |
-            backend-audit.json
-            mobile-audit.json
-            backend-prod-audit.json
-            mobile-prod-audit.json
-            TABIBI_v109.zip
-            V109_CHANGELOG.md
-          if-no-files-found: warn
-
+          unzip -Z1 TABIBI_v109.zip | grep -q '^TABIBI_v109/src/uploads/upload-asset.entity.ts$'
           echo "V109 archive file count: $(unzip -Z1 TABIBI_v109.zip | wc -l)"
           sha256sum TABIBI_v109.zip
           git add -f TABIBI_v109.zip
@@ -99,7 +81,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tabibi-v108-dependency-audit
+          name: tabibi-v109-audit-reports
           path: |
             backend-audit.json
             mobile-audit.json

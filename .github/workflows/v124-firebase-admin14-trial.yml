@@ -1,0 +1,61 @@
+name: TABIBI V124 Firebase Admin 14 compatibility trial
+on:
+  push:
+    branches:
+      - v124-firebase-admin14-trial
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/v124-firebase-admin14-trial.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  firebase-admin14:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v124-firebase-admin14-trial
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve Firebase Admin 14 lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Install backend dependencies from lockfile
+        run: npm ci --ignore-scripts
+      - name: Build backend
+        run: npm run build
+      - name: Check migrations
+        run: npm run check:migrations
+      - name: Install and typecheck mobile
+        working-directory: mobile
+        run: |
+          npm ci --ignore-scripts
+          npm run typecheck
+      - name: Check connected build readiness
+        run: npm run check:build-readiness
+      - name: Capture dependency audits
+        if: always()
+        run: |
+          npm audit --json > backend-audit-v124.json || true
+          cd mobile
+          npm audit --json > ../mobile-audit-v124.json || true
+      - name: Commit tested backend lockfile
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "Lock Firebase Admin 14 dependency trial"
+          git push origin HEAD:v124-firebase-admin14-trial
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v124-firebase-admin14-evidence
+          path: |
+            backend-audit-v124.json
+            mobile-audit-v124.json
+          if-no-files-found: warn
+          retention-days: 30

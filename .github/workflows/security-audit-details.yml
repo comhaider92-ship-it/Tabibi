@@ -1,0 +1,43 @@
+name: TABIBI dependency security detail
+on:
+  push:
+    branches:
+      - v109-development
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'mobile/package.json'
+      - 'mobile/package-lock.json'
+      - '.github/workflows/security-audit-details.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Backend install
+        run: npm ci --ignore-scripts
+      - name: Backend detailed audit
+        run: |
+          npm audit --json > backend-audit.json || true
+          node -e 'const a=require("./backend-audit.json"); for(const [n,v] of Object.entries(a.vulnerabilities||{})) console.log(JSON.stringify({workspace:"backend",name:n,severity:v.severity,isDirect:v.isDirect,range:v.range,via:v.via,fixAvailable:v.fixAvailable})); console.log("BACKEND_TOTALS",JSON.stringify(a.metadata?.vulnerabilities||{}))'
+      - name: Mobile install
+        working-directory: mobile
+        run: npm ci --ignore-scripts
+      - name: Mobile detailed audit
+        working-directory: mobile
+        run: |
+          npm audit --json > ../mobile-audit.json || true
+          node -e 'const a=require("../mobile-audit.json"); for(const [n,v] of Object.entries(a.vulnerabilities||{})) console.log(JSON.stringify({workspace:"mobile",name:n,severity:v.severity,isDirect:v.isDirect,range:v.range,via:v.via,fixAvailable:v.fixAvailable})); console.log("MOBILE_TOTALS",JSON.stringify(a.metadata?.vulnerabilities||{}))'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tabibi-security-audit-json
+          path: |
+            backend-audit.json
+            mobile-audit.json
+          retention-days: 14

@@ -1,0 +1,44 @@
+name: V109 Pull Request Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install backend dependencies
+        run: npm ci --ignore-scripts
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm ci --ignore-scripts
+      - name: Build NestJS backend
+        run: npm run build
+      - name: Type-check mobile app
+        working-directory: mobile
+        run: npm run typecheck
+      - name: Check readiness and migrations
+        run: |
+          npm run check:build-readiness
+          npm run check:migrations
+      - name: Report test and security status
+        shell: bash
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.scripts?.test?0:1)"; then
+            CI=true npm test -- --runInBand
+          else
+            echo "No automated test script is configured."
+          fi
+          npm audit --omit=dev --json > backend-prod-audit.json || true
+          (cd mobile && npm audit --omit=dev --json > ../mobile-prod-audit.json) || true
+          node -e 'const fs=require("fs"); for (const f of ["backend-prod-audit.json","mobile-prod-audit.json"]) { const a=JSON.parse(fs.readFileSync(f,"utf8")); console.log(f+": "+JSON.stringify(a.metadata?.vulnerabilities??{})); }'

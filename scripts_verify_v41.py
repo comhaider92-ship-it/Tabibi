@@ -1,0 +1,21 @@
+from pathlib import Path
+root=Path(__file__).parent
+checks=[]
+def check(name,ok): checks.append((name,bool(ok)))
+appointments=(root/'src/appointments/appointments.service.ts').read_text()
+facilities=(root/'src/facilities/facilities.service.ts').read_text()
+bookings=(root/'mobile/src/screens/BookingsScreen.tsx').read_text()
+client=(root/'mobile/src/api/client.ts').read_text()
+check('doctor appointment list returns cancellation permission only to original patient booker','canCancel: user.role === UserRole.PATIENT && a.bookedByUserId === user.sub' in appointments)
+check('doctor appointment cancellation permission requires confirmed future appointment','a.status === AppointmentStatus.CONFIRMED && a.startsAt.getTime() > Date.now()' in appointments)
+check('facility booking list enriches rows with facility and service metadata','facility:facility?{id:facility.id,name:facility.name,city:facility.city,address:facility.address}:null' in facilities and 'service:service?{id:service.id,name:service.name}:null' in facilities)
+check('facility booking list exposes only valid future cancellation eligibility','canCancel:[FacilityBookingStatus.REQUESTED,FacilityBookingStatus.CONFIRMED].includes(booking.status)&&booking.startsAt>new Date()' in facilities)
+check('facility metadata is loaded in batches rather than per booking','Promise.all([' in facilities and 'facilityIds=[...new Set(rows.map(x=>x.facilityId))]' in facilities and 'serviceIds=[...new Set(rows.map(x=>x.serviceId))]' in facilities)
+check('patient booking list displays actual facility and service names',"x.facility?.name||'حجز لدى مركز أو مختبر'" in bookings and 'x.service?.name' in bookings)
+check('patient booking list respects server cancellation permission','x.canCancel===true' in bookings)
+check('patient booking list preserves beneficiary name and phone','المستفيد: {person}' in bookings and 'x.beneficiaryPhone' in bookings)
+check('mobile facility bookings endpoint remains connected',"'/facilities/bookings/mine'" in client)
+check('no patient cancellation permission is granted solely because user is beneficiary','a.bookedByUserId === user.sub' in appointments)
+for name,ok in checks: print(('PASS' if ok else 'FAIL')+' '+name)
+print(f'V41: {sum(ok for _,ok in checks)}/{len(checks)}')
+raise SystemExit(0 if all(ok for _,ok in checks) else 1)

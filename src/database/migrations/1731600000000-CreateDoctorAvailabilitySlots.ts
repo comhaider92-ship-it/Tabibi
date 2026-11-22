@@ -1,0 +1,6 @@
+import { MigrationInterface, QueryRunner } from 'typeorm';
+export class CreateDoctorAvailabilitySlots1731600000000 implements MigrationInterface {
+ name='CreateDoctorAvailabilitySlots1731600000000';
+ public async up(q:QueryRunner):Promise<void>{ await q.query(`CREATE TABLE "doctor_availability_slots" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "doctorId" uuid NOT NULL, "startsAt" timestamptz NOT NULL, "endsAt" timestamptz NOT NULL, "status" varchar(12) NOT NULL DEFAULT 'open', "note" varchar(240), "createdAt" timestamptz NOT NULL DEFAULT now(), "updatedAt" timestamptz NOT NULL DEFAULT now(), CONSTRAINT "PK_doctor_availability_slots" PRIMARY KEY ("id"), CONSTRAINT "CK_doctor_availability_slots_range" CHECK ("endsAt" > "startsAt"), CONSTRAINT "FK_doctor_availability_slots_profile" FOREIGN KEY ("doctorId") REFERENCES "doctor_profiles"("userId") ON DELETE CASCADE)`); await q.query(`CREATE INDEX "ix_doctor_slots_doctor_start" ON "doctor_availability_slots" ("doctorId", "startsAt")`); await q.query(`CREATE INDEX "ix_doctor_slots_status_start" ON "doctor_availability_slots" ("status", "startsAt")`); }
+ public async down(q:QueryRunner):Promise<void>{ await q.query(`DROP TABLE "doctor_availability_slots"`); }
+}

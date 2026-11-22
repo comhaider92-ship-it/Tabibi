@@ -1,0 +1,23 @@
+name: TABIBI V118 backend patch version discovery
+on:
+  push:
+    branches:
+      - v118-backend-patch-version-discovery
+    paths:
+      - '.github/workflows/v118-backend-patch-version-discovery.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Query current backend patch releases
+        run: |
+          for p in glob picomatch tmp @nestjs/cli @nestjs/config; do
+            echo "### $p"
+            npm view "$p" version
+          done

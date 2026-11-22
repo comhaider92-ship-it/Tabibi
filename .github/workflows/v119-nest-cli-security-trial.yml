@@ -1,0 +1,61 @@
+name: TABIBI V119 backend remaining high fixes trial
+on:
+  push:
+    branches:
+      - v119-nest-cli-security-trial
+    paths:
+      - '.github/workflows/v119-nest-cli-security-trial.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Trial Nest CLI and patched transitive packages
+        run: |
+          npm install --save-dev --save-exact @nestjs/cli@12.0.15 --ignore-scripts
+          npm pkg set 'overrides.lodash=4.18.1' 'overrides.multer=2.5.0' 'overrides.body-parser=2.4.0' 'overrides.glob=14.0.6' 'overrides.picomatch=4.0.7' 'overrides.tmp=0.2.7'
+          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:migrations
+          npm audit --json > backend-audit-v119.json || true
+      - name: Mobile validation from proven V117 set
+        working-directory: mobile
+        run: |
+          npm pkg set 'overrides.postcss=8.5.33' 'overrides.image-size=2.1.0' 'overrides.@xmldom/xmldom=0.9.12' 'overrides.tar=7.5.21'
+          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm audit --json > ../mobile-audit-v119.json || true
+      - name: Report
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs=require('fs');const out=['# V119 backend remaining high fixes trial','','Isolated compatibility test; no release branch changed.',''];
+          for(const [f,l] of [['backend-audit-v119.json','Backend'],['mobile-audit-v119.json','Mobile']]){
+            if(!fs.existsSync(f)){out.push('## '+l,'Audit not generated','');continue;}
+            const a=JSON.parse(fs.readFileSync(f,'utf8'));out.push('## '+l,'','Totals: '+JSON.stringify(a.metadata?.vulnerabilities||{}),'','| Package | Severity |','|---|---|');
+            for(const [n,v] of Object.entries(a.vulnerabilities||{}))out.push('| '+n+' | '+v.severity+' |');out.push('');
+          }fs.writeFileSync('V119_SECURITY_TRIAL.md',out.join('\n'));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v119-security-trial
+          path: |
+            V119_SECURITY_TRIAL.md
+            backend-audit-v119.json
+            mobile-audit-v119.json
+            package.json
+            package-lock.json
+            mobile/package.json
+            mobile/package-lock.json
+          if-no-files-found: warn
+          retention-days: 14

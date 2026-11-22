@@ -1,0 +1,63 @@
+name: TABIBI V115 patched transitive dependencies trial
+on:
+  push:
+    branches:
+      - v115-patched-transitives-trial
+    paths:
+      - '.github/workflows/v115-patched-transitives-trial.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Trial backend current patched versions
+        run: |
+          npm install --save-exact nodemailer@10.6.1 --ignore-scripts
+          npm pkg set 'overrides.lodash=4.17.24' 'overrides.multer=2.5.0'
+          npm install --package-lock-only --ignore-scripts
+          npm audit fix --ignore-scripts || true
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:migrations
+          npm audit --json > backend-audit-v115.json || true
+      - name: Trial mobile patched versions
+        working-directory: mobile
+        run: |
+          npm pkg set 'overrides.postcss=8.5.23' 'overrides.image-size=2.0.3' 'overrides.@xmldom/xmldom=0.8.15' 'overrides.tar=7.5.21'
+          npm install --package-lock-only --ignore-scripts
+          npm audit fix --ignore-scripts || true
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm audit --json > ../mobile-audit-v115.json || true
+      - name: Report and upload
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs=require('fs');const out=['# V115 patched transitive dependencies trial','','Isolated trial; no production branch changed.',''];
+          for(const [f,l] of [['backend-audit-v115.json','Backend'],['mobile-audit-v115.json','Mobile']]){
+            if(!fs.existsSync(f)){out.push('## '+l,'Audit unavailable','');continue;}
+            const a=JSON.parse(fs.readFileSync(f,'utf8'));out.push('## '+l,'','Totals: '+JSON.stringify(a.metadata?.vulnerabilities||{}),'','| Package | Severity | Direct |','|---|---|---:|');
+            for(const [n,v] of Object.entries(a.vulnerabilities||{}))out.push('| '+n+' | '+v.severity+' | '+v.isDirect+' |');out.push('');
+          }fs.writeFileSync('V115_PATCHED_TRANSITIVES.md',out.join('\n'));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v115-patched-transitives
+          path: |
+            V115_PATCHED_TRANSITIVES.md
+            backend-audit-v115.json
+            mobile-audit-v115.json
+            package.json
+            package-lock.json
+            mobile/package.json
+            mobile/package-lock.json
+          if-no-files-found: warn
+          retention-days: 14

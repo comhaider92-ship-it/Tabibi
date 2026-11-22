@@ -16,6 +16,30 @@ export class OtpService {
  constructor(@InjectRepository(AuthOtp) private readonly repo:Repository<AuthOtp>,
   private readonly users:UsersService,private readonly delivery:OtpDeliveryService){}
 
+ // Use conditional database updates so concurrent verification requests cannot
+ // bypass the attempt ceiling or consume the same one-time code more than once.
+ private async recordFailedAttempt(id:string):Promise<boolean>{
+  const result=await this.repo.createQueryBuilder().update(AuthOtp)
+   .set({attempts:()=>'"attempts" + 1'})
+   .where('id = :id',{id})
+   .andWhere('"consumedAt" IS NULL')
+   .andWhere('"expiresAt" > NOW()')
+   .andWhere('attempts < :maxAttempts',{maxAttempts:this.maxAttempts})
+   .execute();
+  return (result.affected||0)===1;
+ }
+
+ private async consumeCode(id:string):Promise<boolean>{
+  const result=await this.repo.createQueryBuilder().update(AuthOtp)
+   .set({consumedAt:new Date()})
+   .where('id = :id',{id})
+   .andWhere('"consumedAt" IS NULL')
+   .andWhere('"expiresAt" > NOW()')
+   .andWhere('attempts < :maxAttempts',{maxAttempts:this.maxAttempts})
+   .execute();
+  return (result.affected||0)===1;
+ }
+
 
  async requestContactChange(userId:string,contactType:'phone'|'email',rawValue:string){
   const value=contactType==='email'?rawValue.trim().toLowerCase():rawValue.trim();
@@ -41,12 +65,14 @@ export class OtpService {
   const changePurpose=contactType==='email'?OtpPurpose.CHANGE_EMAIL:OtpPurpose.CHANGE_PHONE;
   const row=await this.repo.findOne({where:{userId,purpose:changePurpose,target:value,consumedAt:IsNull(),expiresAt:MoreThan(new Date())},order:{createdAt:'DESC'},select:['id','userId','target','purpose','codeHash','expiresAt','consumedAt','attempts','createdAt']});
   if(!row||row.attempts>=this.maxAttempts) throw new BadRequestException('الرمز غير صالح أو منتهي الصلاحية.');
-  row.attempts+=1;
-  if(!(await bcrypt.compare(code,row.codeHash))){await this.repo.save(row);throw new BadRequestException('الرمز غير صحيح.');}
+  if(!(await bcrypt.compare(code,row.codeHash))){
+   await this.recordFailedAttempt(row.id);
+   throw new BadRequestException('الرمز غير صحيح.');
+  }
   if(await this.users.findByIdentifier(value)) throw new ConflictException('بيانات الاتصال أصبحت مستخدمة في حساب آخر.');
+  if(!(await this.consumeCode(row.id))) throw new BadRequestException('الرمز غير صالح أو منتهي الصلاحية.');
   try { await this.users.updateContact(userId,contactType,value); }
   catch(error:any){ if(error?.code==='23505') throw new ConflictException('بيانات الاتصال مستخدمة في حساب آخر.'); throw error; }
-  row.consumedAt=new Date(); await this.repo.save(row);
   return {message:contactType==='email'?'تم تحديث البريد الإلكتروني بعد التحقق.':'تم تحديث رقم الهاتف بعد التحقق.'};
  }
 
@@ -79,14 +105,15 @@ export class OtpService {
   const row=await this.repo.findOne({where:{userId:user.id,purpose,target,consumedAt:IsNull(),expiresAt:MoreThan(new Date())},
    order:{createdAt:'DESC'},select:['id','userId','target','purpose','codeHash','expiresAt','consumedAt','attempts','createdAt']});
   if(!row||row.attempts>=this.maxAttempts) throw new BadRequestException('الرمز غير صالح أو منتهي الصلاحية');
-  row.attempts+=1;
-  if(!(await bcrypt.compare(code,row.codeHash))){await this.repo.save(row);throw new BadRequestException('الرمز غير صحيح');}
-  if(purpose===OtpPurpose.RESET_PASSWORD){
-   if(!newPassword||newPassword.length<10) throw new BadRequestException('كلمة المرور يجب أن تكون 10 أحرف على الأقل');
-   await this.users.updatePassword(user.id,newPassword);
-  }else await this.users.markVerified(user.id);
-  row.consumedAt=new Date();
-  await this.repo.save(row);
+  if(!(await bcrypt.compare(code,row.codeHash))){
+   await this.recordFailedAttempt(row.id);
+   throw new BadRequestException('الرمز غير صحيح');
+  }
+  if(purpose===OtpPurpose.RESET_PASSWORD&&(!newPassword||newPassword.length<10))
+   throw new BadRequestException('كلمة المرور يجب أن تكون 10 أحرف على الأقل');
+  if(!(await this.consumeCode(row.id))) throw new BadRequestException('الرمز غير صالح أو منتهي الصلاحية');
+  if(purpose===OtpPurpose.RESET_PASSWORD) await this.users.updatePassword(user.id,newPassword!);
+  else await this.users.markVerified(user.id);
   return {message:purpose===OtpPurpose.VERIFY_ACCOUNT?'تم توثيق الحساب بنجاح.':'تم تغيير كلمة المرور بنجاح.'};
  }
 }

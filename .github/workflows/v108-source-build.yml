@@ -64,6 +64,15 @@ jobs:
             echo "No test script is declared in V108."
           fi
 
+      - name: Package V109 development candidate
+        shell: bash
+        run: |
+          git archive --format=zip --prefix=TABIBI_v109/ --output=TABIBI_v109.zip HEAD
+          git add TABIBI_v109.zip
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Package TABIBI V109 development candidate"
+          git push origin HEAD:audit/v108-source-review
       - name: Upload dependency audit reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -74,4 +83,6 @@ jobs:
             mobile-audit.json
             backend-prod-audit.json
             mobile-prod-audit.json
+            TABIBI_v109.zip
+            V109_CHANGELOG.md
           if-no-files-found: warn

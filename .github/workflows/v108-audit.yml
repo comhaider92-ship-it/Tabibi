@@ -1,0 +1,98 @@
+name: V108 Archive Audit
+
+on:
+  push:
+    branches:
+      - audit/v108-review
+    paths:
+      - TABIBI_v108.zip
+  pull_request:
+    branches:
+      - main
+    paths:
+      - TABIBI_v108.zip
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out audit branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install archive tools
+        run: sudo apt-get update && sudo apt-get install -y unzip
+      - name: Inspect and test V108 archive
+        shell: bash
+        run: |
+          set -uo pipefail
+          ARCHIVE="TABIBI_v108.zip"
+          REPORT="$GITHUB_WORKSPACE/V108_AUDIT_REPORT.txt"
+          {
+            echo "TABIBI V108 AUTOMATED AUDIT"
+            echo "Date (UTC): $(date -u +%FT%TZ)"
+            echo
+            echo "== Archive presence and integrity =="
+            if [ ! -f "$ARCHIVE" ]; then
+              echo "ERROR: $ARCHIVE not found at repository root."
+              exit 1
+            fi
+            ls -lh "$ARCHIVE"
+            unzip -t "$ARCHIVE"
+            echo
+            echo "== Archive file listing =="
+            unzip -Z1 "$ARCHIVE" | tee /tmp/v108-files.txt
+            echo
+            echo "== Extract archive =="
+            mkdir -p /tmp/tabibi-v108
+            unzip -q "$ARCHIVE" -d /tmp/tabibi-v108
+            echo "Extracted file count: $(find /tmp/tabibi-v108 -type f | wc -l)"
+            echo
+            echo "== Package manifests =="
+            find /tmp/tabibi-v108 -name package.json -not -path '*/node_modules/*' -print
+          } 2>&1 | tee "$REPORT"
+
+          mapfile -t manifests < <(find /tmp/tabibi-v108 -name package.json -not -path '*/node_modules/*' -print)
+          if [ "${#manifests[@]}" -eq 0 ]; then
+            echo "No package.json found; archive integrity and file inventory completed." | tee -a "$REPORT"
+          fi
+
+          for manifest in "${manifests[@]}"; do
+            dir="$(dirname "$manifest")"
+            echo >> "$REPORT"
+            echo "== Node project: $dir ==" | tee -a "$REPORT"
+            if [ -f "$dir/package-lock.json" ]; then
+              (cd "$dir" && npm ci --ignore-scripts) 2>&1 | tee -a "$REPORT" || echo "DEPENDENCY INSTALL FAILED: $dir" | tee -a "$REPORT"
+            else
+              (cd "$dir" && npm install --ignore-scripts --package-lock=false) 2>&1 | tee -a "$REPORT" || echo "DEPENDENCY INSTALL FAILED: $dir" | tee -a "$REPORT"
+            fi
+            if node -e "const p=require('$manifest'); process.exit(p.scripts?.build?0:1)"; then
+              (cd "$dir" && npm run build) 2>&1 | tee -a "$REPORT" || echo "BUILD FAILED: $dir" | tee -a "$REPORT"
+            else
+              echo "No build script declared." | tee -a "$REPORT"
+            fi
+            if node -e "const p=require('$manifest'); process.exit(p.scripts?.test?0:1)"; then
+              (cd "$dir" && CI=true npm test -- --runInBand) 2>&1 | tee -a "$REPORT" || echo "TEST COMMAND FAILED: $dir" | tee -a "$REPORT"
+            else
+              echo "No test script declared." | tee -a "$REPORT"
+            fi
+          done
+
+          echo >> "$REPORT"
+          echo "Audit completed. Review all BUILD FAILED / TEST COMMAND FAILED / DEPENDENCY INSTALL FAILED markers." | tee -a "$REPORT"
+      - name: Upload audit report and inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tabibi-v108-audit-report
+          path: |
+            V108_AUDIT_REPORT.txt
+            /tmp/v108-files.txt
+          if-no-files-found: warn

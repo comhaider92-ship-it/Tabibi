@@ -5,6 +5,7 @@ on:
       - v123-api-security-hardening
     paths:
       - 'src/main.ts'
+      - 'src/auth/otp.service.ts'
       - 'docs/V123_API_SECURITY_HARDENING.md'
       - '.github/workflows/v123-api-security-hardening.yml'
   workflow_dispatch:
@@ -49,7 +50,14 @@ jobs:
             console.error('Missing security controls:', missing);
             process.exit(1);
           }
-          console.log('API security header assertions passed.');
+          const otp = fs.readFileSync('src/auth/otp.service.ts', 'utf8');
+          for (const value of ['recordFailedAttempt', 'consumeCode', 'attempts < :maxAttempts', '"consumedAt" IS NULL']) {
+            if (!otp.includes(value)) {
+              console.error('Missing concurrency-safe OTP control:', value);
+              process.exit(1);
+            }
+          }
+          console.log('API security header and OTP concurrency assertions passed.');
           NODE
       - name: Capture dependency audit
         if: always()

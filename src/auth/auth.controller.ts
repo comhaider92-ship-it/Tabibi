@@ -10,7 +10,7 @@ import { UpdatePatientProfileDto } from './dto/update-patient-profile.dto';
 import { RequestContactChangeDto } from './dto/request-contact-change.dto';
 import { ConfirmContactChangeDto } from './dto/confirm-contact-change.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { UnauthorizedException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ForbiddenException, Patch } from '@nestjs/common';
 import { OtpPurpose } from './otp.entity';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -45,6 +45,7 @@ export class AuthController {
   if(!user) return null;
   if(user.role!=='patient') throw new ForbiddenException('تعديل هذا الملف متاح لحساب المريض فقط.');
   const updated=await this.users.updateDisplayName(user.id,dto.displayName);
+  if(!updated) throw new NotFoundException('الحساب غير موجود.');
   return {id:updated.id,displayName:updated.displayName,email:updated.email,phone:updated.phone,role:updated.role,isVerified:updated.isVerified};
  }
  @Post('me/password/change') @UseGuards(JwtAuthGuard)

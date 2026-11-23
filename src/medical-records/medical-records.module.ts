@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
 import { Appointment } from '../appointments/appointment.entity';
 import { DoctorProfile } from '../doctors/doctor-profile.entity';
 import { UploadAsset } from '../uploads/upload-asset.entity';
@@ -16,7 +17,7 @@ import { MedicalRecordsController } from './medical-records.controller';
 import { MedicalPrescriptionVerificationController } from './medical-prescription-verification.controller';
 import { MedicalRecordsService } from './medical-records.service';
 @Module({
-  imports: [TypeOrmModule.forFeature([MedicalRecord, MedicalRecordAccessLog, Appointment, MedicalRecordAttachment, MedicalRecordShareConsent, UploadAsset, DoctorProfile, MedicalPrescription, MedicalLabResult, MedicalClinicalReport, User]), AuthModule],
+  imports: [TypeOrmModule.forFeature([MedicalRecord, MedicalRecordAccessLog, Appointment, MedicalRecordAttachment, MedicalRecordShareConsent, UploadAsset, DoctorProfile, MedicalPrescription, MedicalLabResult, MedicalClinicalReport, User, UsersModule]), AuthModule],
   controllers: [MedicalRecordsController, MedicalPrescriptionVerificationController], providers: [MedicalRecordsService],
 })
 export class MedicalRecordsModule {}

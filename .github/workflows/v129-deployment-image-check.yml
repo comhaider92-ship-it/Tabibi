@@ -35,15 +35,24 @@ jobs:
         with:
           ref: v129-deployment-readiness-trial
 
+      - name: Create disposable CI environment file
+        run: |
+          cat > .env <<'EOF'
+          NODE_ENV=production
+          PORT=3000
+          DATABASE_HOST=db
+          DATABASE_PORT=5432
+          DATABASE_NAME=tabibi_ci
+          DATABASE_USER=tabibi_ci
+          DATABASE_PASSWORD=CI_only_not_a_real_secret_123
+          JWT_SECRET=CI_only_not_a_real_secret_at_least_32_chars
+          OWNER_EMAIL=owner-ci@example.invalid
+          OWNER_PASSWORD=CI_only_not_a_real_owner_password_123
+          UPLOADS_DIRECTORY=/app/private-uploads
+          PUBLIC_API_BASE_URL=https://api.example.invalid/api/v1
+          EOF
+
       - name: Validate Compose configuration
-        env:
-          DATABASE_NAME: tabibi_ci
-          DATABASE_USER: tabibi_ci
-          DATABASE_PASSWORD: CI_only_not_a_real_secret_123
-          JWT_SECRET: CI_only_not_a_real_secret_at_least_32_chars
-          OWNER_EMAIL: owner-ci@example.invalid
-          OWNER_PASSWORD: CI_only_not_a_real_owner_password_123
-          PUBLIC_API_BASE_URL: https://api.example.invalid/api/v1
         run: docker compose config --quiet
 
       - name: Build production API image

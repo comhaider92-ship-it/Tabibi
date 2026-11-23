@@ -10,6 +10,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'src/**'
+      - 'mobile/**'
       - '.github/workflows/v129-deployment-image-check.yml'
   pull_request:
     branches:
@@ -20,6 +21,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'src/**'
+      - 'mobile/**'
       - '.github/workflows/v129-deployment-image-check.yml'
   workflow_dispatch:
 
@@ -29,7 +31,7 @@ permissions:
 jobs:
   deployment-image-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,7 +60,18 @@ jobs:
       - name: Build production API image
         run: docker build --pull --tag tabibi-api:v129-ci .
 
+      - name: Install mobile dependencies and validate Android app
+        working-directory: mobile
+        env:
+          EXPO_PUBLIC_API_URL: https://tabibi-ci.invalid/api/v1
+        run: |
+          npm ci
+          npm run typecheck
+          npm run check:build-config
+
       - name: Install backend dependencies and run static readiness checks
+        env:
+          EXPO_PUBLIC_API_URL: https://tabibi-ci.invalid/api/v1
         run: |
           npm ci --ignore-scripts
           npm run build

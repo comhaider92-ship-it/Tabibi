@@ -1,3 +1,22 @@
-import { Module } from '@nestjs/common';import { TypeOrmModule } from '@nestjs/typeorm';import { AuthModule } from '../auth/auth.module';
-import { UsersModule } from '../users/users.module'; import { NotificationsModule } from '../notifications/notifications.module';import { DoctorSubscription } from './subscription.entity';import { OwnerAuditLog } from './audit-log.entity';import { User } from '../users/user.entity';import { DoctorProfile } from '../doctors/doctor-profile.entity';import { MedicalFacility } from '../facilities/facility.entity';import { Advertisement } from '../ads/ad.entity';import { FinanceService } from './finance.service';import { SubscriptionsController } from './subscriptions.controller';import { SubscriptionsService } from './subscriptions.service';
-@Module({imports:[TypeOrmModule.forFeature([DoctorSubscription,OwnerAuditLog,User,DoctorProfile,MedicalFacility,Advertisement, UsersModule]),AuthModule,NotificationsModule],controllers:[SubscriptionsController],providers:[SubscriptionsService,FinanceService],exports:[TypeOrmModule,SubscriptionsService]}) export class SubscriptionsModule{}
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { DoctorSubscription } from './subscription.entity';
+import { OwnerAuditLog } from './audit-log.entity';
+import { User } from '../users/user.entity';
+import { DoctorProfile } from '../doctors/doctor-profile.entity';
+import { MedicalFacility } from '../facilities/facility.entity';
+import { Advertisement } from '../ads/ad.entity';
+import { FinanceService } from './finance.service';
+import { SubscriptionsController } from './subscriptions.controller';
+import { SubscriptionsService } from './subscriptions.service';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([DoctorSubscription, OwnerAuditLog, User, DoctorProfile, MedicalFacility, Advertisement]), AuthModule, UsersModule, NotificationsModule],
+  controllers: [SubscriptionsController],
+  providers: [SubscriptionsService, FinanceService],
+  exports: [TypeOrmModule, SubscriptionsService],
+})
+export class SubscriptionsModule {}

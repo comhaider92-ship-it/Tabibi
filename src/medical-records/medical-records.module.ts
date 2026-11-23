@@ -16,8 +16,10 @@ import { User } from '../users/user.entity';
 import { MedicalRecordsController } from './medical-records.controller';
 import { MedicalPrescriptionVerificationController } from './medical-prescription-verification.controller';
 import { MedicalRecordsService } from './medical-records.service';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([MedicalRecord, MedicalRecordAccessLog, Appointment, MedicalRecordAttachment, MedicalRecordShareConsent, UploadAsset, DoctorProfile, MedicalPrescription, MedicalLabResult, MedicalClinicalReport, User, UsersModule]), AuthModule],
-  controllers: [MedicalRecordsController, MedicalPrescriptionVerificationController], providers: [MedicalRecordsService],
+  imports: [TypeOrmModule.forFeature([MedicalRecord, MedicalRecordAccessLog, Appointment, MedicalRecordAttachment, MedicalRecordShareConsent, UploadAsset, DoctorProfile, MedicalPrescription, MedicalLabResult, MedicalClinicalReport, User]), AuthModule, UsersModule],
+  controllers: [MedicalRecordsController, MedicalPrescriptionVerificationController],
+  providers: [MedicalRecordsService],
 })
 export class MedicalRecordsModule {}

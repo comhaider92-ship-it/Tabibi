@@ -63,6 +63,18 @@ jobs:
       - name: Execute all database migrations against disposable PostgreSQL
         run: |
           docker compose up --build --abort-on-container-exit --exit-code-from migrate migrate
+          docker compose up -d api
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/api/v1/health/ready; then
+              echo "API readiness endpoint passed."
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              docker compose logs api
+              exit 1
+            fi
+            sleep 2
+          done
           docker compose down --volumes --remove-orphans
 
       - name: Install mobile dependencies and validate Android app

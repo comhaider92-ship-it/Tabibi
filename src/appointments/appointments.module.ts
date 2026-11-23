@@ -13,7 +13,7 @@ import { ScheduleException } from '../scheduling/schedule-exception.entity';
 import { DoctorSubscription } from '../subscriptions/subscription.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Appointment, AppointmentStatusHistory, User, DoctorProfile, ScheduleException, DoctorSubscription, UsersModule]), AuthModule, NotificationsModule],
+  imports: [TypeOrmModule.forFeature([Appointment, AppointmentStatusHistory, User, DoctorProfile, ScheduleException, DoctorSubscription]), AuthModule, UsersModule, NotificationsModule],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
 })

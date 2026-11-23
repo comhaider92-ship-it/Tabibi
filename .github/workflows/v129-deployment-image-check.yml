@@ -1,18 +1,6 @@
 name: TABIBI V129 deployment image validation
 
 on:
-  push:
-    branches:
-      - v129-deployment-readiness-trial
-    paths:
-      - 'Dockerfile'
-      - 'compose.yaml'
-      - 'render.yaml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'src/**'
-      - 'mobile/**'
-      - '.github/workflows/v129-deployment-image-check.yml'
   pull_request:
     branches:
       - v128-mobile-security-trial

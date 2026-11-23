@@ -9,8 +9,9 @@ import { DoctorsService } from './doctors.service';
 import { AuthModule } from '../auth/auth.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { SchedulingModule } from '../scheduling/scheduling.module';
+import { UsersModule } from '../users/users.module';
 @Module({
-  imports: [TypeOrmModule.forFeature([DoctorProfile, DoctorRating, OwnerAuditLog, UploadAsset]), AuthModule, NotificationsModule, SchedulingModule],
+  imports: [TypeOrmModule.forFeature([DoctorProfile, DoctorRating, OwnerAuditLog, UploadAsset]), AuthModule, NotificationsModule, SchedulingModule, UsersModule],
   controllers: [DoctorsController],
   providers: [DoctorsService],
 })

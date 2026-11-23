@@ -68,3 +68,14 @@ Before starting the API with `NODE_ENV=production`, provide all of the following
 For production startup, `OWNER_EMAIL` and `OWNER_PASSWORD` are mandatory because the API creates the initial sole-owner account when it does not already exist. The email must be a real address (not an example placeholder); the bootstrap password must be unique, at least 14 characters, and not a common/default placeholder. `DATABASE_PASSWORD` must also be unique, at least 16 characters, and not a common/default placeholder. These checks run before NestJS initializes the database connection. Store these values only in the deployment secret manager or protected `.env`; after first successful owner login, change the bootstrap password through the account's password-change flow and rotate the deployment secret in a coordinated maintenance window.
 
 The V107 checks are static source checks. They do not prove a production database, owner bootstrap, Docker image, or Android APK has been executed. Those require a real PostgreSQL 16 service and an HTTPS deployment endpoint.
+
+
+## Render deployment (V129)
+
+A Render Blueprint is provided in `render.yaml`. It creates a Frankfurt Docker web service, managed PostgreSQL 16, a private persistent upload disk, runs `npm run migration:run` before each deployment, and checks `/api/v1/health/ready`. The API derives its public HTTPS base URL from Render's assigned service URL.
+
+To deploy, connect the GitHub repository to Render and create a Blueprint from branch `v129-deployment-readiness-trial`. During initial setup, provide the owner email/password and SMTP credentials in Render's secret prompts; never place them in GitHub or chat. SMTP is needed for email OTP. Phone OTP additionally requires an SMS provider configured through `SMS_API_URL`, `SMS_API_TOKEN`, and `SMS_SENDER_ID`. Push delivery additionally requires Firebase credentials.
+
+The blueprint uses the smallest paid Render web and PostgreSQL plans plus a 1 GB persistent upload disk. Current listed starting costs are approximately $7/month for the web service, $6/month for PostgreSQL, and $0.25/month for the disk, before bandwidth, taxes, or email/SMS provider charges. The free PostgreSQL instance expires after 30 days, so it is not selected for this deployment. Review the live pricing before confirming any paid resources.
+
+Do not store real patient records until production backups and restore testing, access controls, monitoring, and applicable privacy/security obligations have been reviewed. A successful Render deployment is still not a substitute for clinical workflow acceptance testing.

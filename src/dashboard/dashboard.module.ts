@@ -14,7 +14,11 @@ import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Appointment, AvailabilitySlot, DoctorProfile, ScheduleException, MedicalFacility, FacilityBooking, FacilityAvailabilitySlot, FacilityService, UsersModule]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([Appointment, AvailabilitySlot, DoctorProfile, ScheduleException, MedicalFacility, FacilityBooking, FacilityAvailabilitySlot, FacilityService]),
+    AuthModule,
+    UsersModule,
+  ],
   controllers: [DashboardController],
   providers: [DashboardService],
 })

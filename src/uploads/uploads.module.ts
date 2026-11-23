@@ -12,7 +12,11 @@ import { UsersModule } from '../users/users.module';
 import { UploadsController } from './uploads.controller';
 import { UploadsService } from './uploads.service';
 @Module({
-  imports: [TypeOrmModule.forFeature([UploadAsset, MedicalFacility, DoctorProfile, MedicalRecordAttachment, MedicalRecordShareConsent, MedicalRecord, MedicalRecordAccessLog, UsersModule]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([UploadAsset, MedicalFacility, DoctorProfile, MedicalRecordAttachment, MedicalRecordShareConsent, MedicalRecord, MedicalRecordAccessLog]),
+    AuthModule,
+    UsersModule,
+  ],
   controllers: [UploadsController],
   providers: [UploadsService],
   exports: [UploadsService],

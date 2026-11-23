@@ -3,7 +3,7 @@ name: TABIBI V129 deployment image validation
 on:
   push:
     branches:
-      - v129-deployment-readiness-trial
+      - v128-mobile-security-trial
     paths:
       - 'Dockerfile'
       - 'compose.yaml'

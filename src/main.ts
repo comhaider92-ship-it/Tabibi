@@ -4,6 +4,12 @@ import { json, type NextFunction, type Request, type Response } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Render assigns a stable public service URL at runtime. Derive the API base
+  // path when deploying there so QR links do not depend on a hard-coded domain.
+  const renderExternalUrl = process.env.RENDER_EXTERNAL_URL?.trim().replace(/\/+$/, '');
+  if (!process.env.PUBLIC_API_BASE_URL && renderExternalUrl) {
+    process.env.PUBLIC_API_BASE_URL = `${renderExternalUrl}/api/v1`;
+  }
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
   // Keep the body limit aligned with the 10 MiB upload cap plus base64/JSON overhead.

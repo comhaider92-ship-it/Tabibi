@@ -7,6 +7,7 @@ on:
     paths:
       - 'Dockerfile'
       - 'compose.yaml'
+      - 'render.yaml'
       - 'package.json'
       - 'package-lock.json'
       - 'src/**'

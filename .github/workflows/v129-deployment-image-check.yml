@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - v128-mobile-security-trial
+      - v128-mobile-security-trial
     paths:
       - 'Dockerfile'
       - 'compose.yaml'

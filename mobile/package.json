@@ -44,8 +44,6 @@
     "postcss": "8.5.33",
     "image-size": "2.1.0",
     "@xmldom/xmldom": "0.9.12",
-    "@expo/fingerprint": {
-      "minimatch": "11.0.1"
-    }
+    "minimatch": "11.0.1"
   }
 }

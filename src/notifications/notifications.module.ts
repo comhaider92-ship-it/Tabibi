@@ -10,9 +10,10 @@ import { NotificationsService } from './notifications.service';
 import { ReminderWorkerService } from './reminder-worker.service';
 import { FirebasePushService } from './push/firebase-push.service';
 import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
 import { User } from '../users/user.entity';
 @Module({
-  imports: [TypeOrmModule.forFeature([Notification, NotificationDeviceToken, NotificationPreference, AppointmentReminder, User]), AuthModule, ScheduleModule.forRoot()],
+  imports: [TypeOrmModule.forFeature([Notification, NotificationDeviceToken, NotificationPreference, AppointmentReminder, User]), AuthModule, UsersModule, ScheduleModule.forRoot()],
   controllers: [NotificationsController],
   providers: [NotificationsService, ReminderWorkerService, FirebasePushService],
   exports: [NotificationsService],

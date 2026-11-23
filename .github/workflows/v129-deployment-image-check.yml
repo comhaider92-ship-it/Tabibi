@@ -1,4 +1,5 @@
 name: TABIBI V129 deployment image validation
+# Re-run validation after the scheduling dependency-injection fix.
 
 on:
   pull_request:

@@ -1,4 +1,5 @@
 name: Export complete TABIBI source archive
+run-name: Build downloadable TABIBI source ZIP
 
 on:
   push:

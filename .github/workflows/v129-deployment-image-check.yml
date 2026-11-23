@@ -11,6 +11,16 @@ on:
       - 'package-lock.json'
       - 'src/**'
       - '.github/workflows/v129-deployment-image-check.yml'
+  pull_request:
+    branches:
+      - v129-deployment-readiness-trial
+    paths:
+      - 'Dockerfile'
+      - 'compose.yaml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/**'
+      - '.github/workflows/v129-deployment-image-check.yml'
   workflow_dispatch:
 
 permissions:

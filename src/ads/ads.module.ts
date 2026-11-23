@@ -1,3 +1,18 @@
-import { Module } from '@nestjs/common';import { TypeOrmModule } from '@nestjs/typeorm';import { AuthModule } from '../auth/auth.module';
-import { UsersModule } from '../users/users.module';import { OwnerAuditLog } from '../subscriptions/audit-log.entity';import { Advertisement } from './ad.entity';import { DoctorProfile } from '../doctors/doctor-profile.entity';import { MedicalFacility } from '../facilities/facility.entity';import { AdsService } from './ads.service';import { OwnerAdsController,PublicAdsController } from './ads.controller';
-@Module({imports:[TypeOrmModule.forFeature([Advertisement,OwnerAuditLog,DoctorProfile,MedicalFacility, UsersModule]),AuthModule],controllers:[PublicAdsController,OwnerAdsController],providers:[AdsService],exports:[AdsService]}) export class AdsModule{}
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
+import { OwnerAuditLog } from '../subscriptions/audit-log.entity';
+import { Advertisement } from './ad.entity';
+import { DoctorProfile } from '../doctors/doctor-profile.entity';
+import { MedicalFacility } from '../facilities/facility.entity';
+import { AdsService } from './ads.service';
+import { OwnerAdsController, PublicAdsController } from './ads.controller';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Advertisement, OwnerAuditLog, DoctorProfile, MedicalFacility]), AuthModule, UsersModule],
+  controllers: [PublicAdsController, OwnerAdsController],
+  providers: [AdsService],
+  exports: [AdsService],
+})
+export class AdsModule {}

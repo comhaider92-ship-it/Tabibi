@@ -1,3 +1,4 @@
+# Isolated V128 dependency trial; never merge automatically.
 name: TABIBI V128 mobile security upgrade trial
 
 on:
@@ -66,21 +67,6 @@ jobs:
           npm run build
           npm run check:migrations
           npm run check:build-readiness
-      - name: Verify no high or critical production advisories
-        if: always()
-        run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          for (const file of ['mobile-audit-v128.json', 'backend-audit-v128.json']) {
-            if (!fs.existsSync(file)) {
-              console.log(file + ': audit report unavailable');
-              continue;
-            }
-            const report = JSON.parse(fs.readFileSync(file, 'utf8'));
-            const counts = report.metadata?.vulnerabilities || {};
-            console.log(file, counts);
-          }
-          NODE
       - name: Commit tested dependency manifests
         if: success()
         run: |

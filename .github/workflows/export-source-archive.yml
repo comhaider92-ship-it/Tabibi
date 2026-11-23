@@ -22,12 +22,12 @@ jobs:
           fetch-depth: 1
       - name: Create clean source ZIP
         run: |
-          git archive --format=zip --output=TABIBI_SOURCE_V129.zip HEAD
-          unzip -t TABIBI_SOURCE_V129.zip
-          unzip -Z1 TABIBI_SOURCE_V129.zip | wc -l
+          git archive --format=zip --output=/tmp/TABIBI_SOURCE_V129.zip HEAD
+          unzip -t /tmp/TABIBI_SOURCE_V129.zip
+          unzip -Z1 /tmp/TABIBI_SOURCE_V129.zip | wc -l
       - uses: actions/upload-artifact@v4
         with:
           name: TABIBI_SOURCE_V129
-          path: TABIBI_SOURCE_V129.zip
+          path: /tmp/TABIBI_SOURCE_V129.zip
           if-no-files-found: error
           retention-days: 30

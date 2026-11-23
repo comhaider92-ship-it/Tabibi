@@ -1,0 +1,104 @@
+name: TABIBI V128 mobile security upgrade trial
+
+on:
+  push:
+    branches:
+      - v128-mobile-security-trial
+    paths:
+      - 'mobile/package.json'
+      - 'mobile/package-lock.json'
+      - 'mobile/app.json'
+      - 'mobile/src/**'
+      - 'mobile/scripts/**'
+      - '.github/workflows/v128-mobile-security-trial.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mobile-security-trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v128-mobile-security-trial
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - name: Record candidate Expo release
+        working-directory: mobile
+        run: |
+          node --version
+          npm --version
+          npm view expo version
+      - name: Upgrade Expo to current stable and align native modules
+        working-directory: mobile
+        run: |
+          npm install expo@latest --ignore-scripts --no-audit --no-fund
+          npx expo install --fix
+          npm install --ignore-scripts --no-audit --no-fund
+          node scripts/patch-metro-image-size.mjs
+      - name: Expo dependency diagnostics
+        working-directory: mobile
+        run: npx expo-doctor
+      - name: Mobile TypeScript check
+        working-directory: mobile
+        run: npm run typecheck
+      - name: Android JavaScript bundle export
+        working-directory: mobile
+        env:
+          EXPO_DEBUG: '1'
+        run: npx expo export --platform android
+      - name: Mobile dependency security audit
+        if: always()
+        working-directory: mobile
+        run: npm audit --json > ../mobile-audit-v128.json || true
+      - name: Backend production dependency security audit
+        if: always()
+        run: npm audit --omit=dev --json > backend-audit-v128.json || true
+      - name: Backend build and migration checks
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:migrations
+          npm run check:build-readiness
+      - name: Verify no high or critical production advisories
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          for (const file of ['mobile-audit-v128.json', 'backend-audit-v128.json']) {
+            if (!fs.existsSync(file)) {
+              console.log(file + ': audit report unavailable');
+              continue;
+            }
+            const report = JSON.parse(fs.readFileSync(file, 'utf8'));
+            const counts = report.metadata?.vulnerabilities || {};
+            console.log(file, counts);
+          }
+          NODE
+      - name: Commit tested dependency manifests
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/package.json mobile/package-lock.json
+          if git diff --cached --quiet; then
+            echo "No dependency manifest changes to commit."
+          else
+            git commit -m "Trial latest compatible Expo security updates"
+            git push origin HEAD:v128-mobile-security-trial
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tabibi-v128-security-evidence
+          path: |
+            mobile-audit-v128.json
+            backend-audit-v128.json
+          if-no-files-found: warn
+          retention-days: 30

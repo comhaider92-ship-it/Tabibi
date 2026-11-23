@@ -5,6 +5,7 @@ import { AppointmentStatusHistory } from './appointment-status-history.entity';
 import { AppointmentsController } from './appointments.controller';
 import { AppointmentsService } from './appointments.service';
 import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
 import { User } from '../users/user.entity';
 import { DoctorProfile } from '../doctors/doctor-profile.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -12,7 +13,7 @@ import { ScheduleException } from '../scheduling/schedule-exception.entity';
 import { DoctorSubscription } from '../subscriptions/subscription.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Appointment, AppointmentStatusHistory, User, DoctorProfile, ScheduleException, DoctorSubscription]), AuthModule, NotificationsModule],
+  imports: [TypeOrmModule.forFeature([Appointment, AppointmentStatusHistory, User, DoctorProfile, ScheduleException, DoctorSubscription, UsersModule]), AuthModule, NotificationsModule],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
 })

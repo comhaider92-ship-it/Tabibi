@@ -12,5 +12,10 @@ import { MessagesService } from './messages.service';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
-@Module({imports:[TypeOrmModule.forFeature([BookingMessage,BookingConversationMute,BookingMessageReport,Appointment,FacilityBooking,MedicalFacility,User, UsersModule]),AuthModule,NotificationsModule],controllers:[MessagesController],providers:[MessagesService]})
-export class MessagesModule{}
+
+@Module({
+  imports: [TypeOrmModule.forFeature([BookingMessage, BookingConversationMute, BookingMessageReport, Appointment, FacilityBooking, MedicalFacility, User]), AuthModule, UsersModule, NotificationsModule],
+  controllers: [MessagesController],
+  providers: [MessagesService],
+})
+export class MessagesModule {}

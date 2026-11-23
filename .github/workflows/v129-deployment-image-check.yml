@@ -1,0 +1,90 @@
+name: TABIBI V129 deployment image validation
+# Re-run validation after the scheduling dependency-injection fix.
+
+on:
+  pull_request:
+    branches:
+      - v128-mobile-security-trial
+    paths:
+      - 'Dockerfile'
+      - 'compose.yaml'
+      - 'render.yaml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/**'
+      - 'mobile/**'
+      - '.github/workflows/v129-deployment-image-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deployment-image-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v129-deployment-readiness-trial
+
+      - name: Create disposable CI environment file
+        run: |
+          cat > .env <<'EOF'
+          NODE_ENV=production
+          PORT=3000
+          DATABASE_HOST=db
+          DATABASE_PORT=5432
+          DATABASE_NAME=tabibi_ci
+          DATABASE_USER=tabibi_ci
+          DATABASE_PASSWORD=CI_only_not_a_real_secret_123
+          JWT_SECRET=CI_only_not_a_real_secret_at_least_32_chars
+          OWNER_EMAIL=owner-ci@example.invalid
+          OWNER_PASSWORD=CI_only_not_a_real_owner_password_123
+          UPLOADS_DIRECTORY=/app/private-uploads
+          PUBLIC_API_BASE_URL=https://api.example.invalid/api/v1
+          EOF
+
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+
+      - name: Validate Render Blueprint YAML syntax
+        run: ruby -e 'require "yaml"; YAML.load_file("render.yaml")'
+
+      - name: Build production API image
+        run: docker build --pull --tag tabibi-api:v129-ci .
+
+      - name: Execute all database migrations against disposable PostgreSQL
+        run: |
+          docker compose up --build --abort-on-container-exit --exit-code-from migrate migrate
+          docker compose up -d api
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/api/v1/health/ready; then
+              echo "API readiness endpoint passed."
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              docker compose logs api
+              exit 1
+            fi
+            sleep 2
+          done
+          docker compose down --volumes --remove-orphans
+
+      - name: Install mobile dependencies and validate Android app
+        working-directory: mobile
+        env:
+          EXPO_PUBLIC_API_URL: https://tabibi-ci.invalid/api/v1
+        run: |
+          npm ci
+          npm run typecheck
+          npm run check:build-config
+
+      - name: Install backend dependencies and run static readiness checks
+        env:
+          EXPO_PUBLIC_API_URL: https://tabibi-ci.invalid/api/v1
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npm run check:migrations
+          npm run check:build-readiness

@@ -9,7 +9,13 @@ import { FacilityAvailabilitySlot } from './facility-slot.entity';
 import { FacilitiesController } from './facilities.controller';
 import { FacilitiesService } from './facilities.service';
 import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { OwnerAuditLog } from '../subscriptions/audit-log.entity';
-@Module({imports:[TypeOrmModule.forFeature([MedicalFacility,FacilityService,FacilityBooking,FacilityAvailabilitySlot,WeeklyScheduleRule,ScheduleException,OwnerAuditLog]),AuthModule,NotificationsModule],controllers:[FacilitiesController],providers:[FacilitiesService]})
-export class FacilitiesModule{}
+
+@Module({
+  imports: [TypeOrmModule.forFeature([MedicalFacility, FacilityService, FacilityBooking, FacilityAvailabilitySlot, WeeklyScheduleRule, ScheduleException, OwnerAuditLog]), AuthModule, UsersModule, NotificationsModule],
+  controllers: [FacilitiesController],
+  providers: [FacilitiesService],
+})
+export class FacilitiesModule {}

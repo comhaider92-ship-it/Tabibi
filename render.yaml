@@ -1,0 +1,69 @@
+services:
+  - type: web
+    name: tabibi-api
+    runtime: docker
+    region: frankfurt
+    plan: 0.5c-512mb
+    dockerfilePath: ./Dockerfile
+    preDeployCommand: npm run migration:run
+    healthCheckPath: /api/v1/health/ready
+    autoDeployTrigger: checksPass
+    disk:
+      name: tabibi-private-uploads
+      mountPath: /app/private-uploads
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: tabibi-db
+          property: host
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: tabibi-db
+          property: port
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: tabibi-db
+          property: database
+      - key: DATABASE_USER
+        fromDatabase:
+          name: tabibi-db
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: tabibi-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 30m
+      - key: OWNER_EMAIL
+        sync: false
+      - key: OWNER_PASSWORD
+        sync: false
+      - key: UPLOADS_DIRECTORY
+        value: /app/private-uploads
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+    maxShutdownDelaySeconds: 60
+
+databases:
+  - name: tabibi-db
+    region: frankfurt
+    plan: 0.1c-256mb
+    postgresMajorVersion: "16"
+    databaseName: tabibi
+    user: tabibi_owner
+    ipAllowList: []

@@ -1,0 +1,33 @@
+name: Export complete TABIBI source archive
+run-name: Build downloadable TABIBI source ZIP
+
+on:
+  push:
+    branches:
+      - v129-deployment-readiness-trial
+    paths:
+      - '.github/workflows/export-source-archive.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v129-deployment-readiness-trial
+          fetch-depth: 1
+      - name: Create clean source ZIP
+        run: |
+          git archive --format=zip --output=/tmp/TABIBI_SOURCE_V129.zip HEAD
+          unzip -t /tmp/TABIBI_SOURCE_V129.zip
+          unzip -Z1 /tmp/TABIBI_SOURCE_V129.zip | wc -l
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TABIBI_SOURCE_V129
+          path: /tmp/TABIBI_SOURCE_V129.zip
+          if-no-files-found: error
+          retention-days: 90

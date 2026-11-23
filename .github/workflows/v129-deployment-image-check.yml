@@ -60,6 +60,11 @@ jobs:
       - name: Build production API image
         run: docker build --pull --tag tabibi-api:v129-ci .
 
+      - name: Execute all database migrations against disposable PostgreSQL
+        run: |
+          docker compose up --build --abort-on-container-exit --exit-code-from migrate migrate
+          docker compose down --volumes --remove-orphans
+
       - name: Install mobile dependencies and validate Android app
         working-directory: mobile
         env:

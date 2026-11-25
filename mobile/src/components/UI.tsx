@@ -1,21 +1,12 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-
+import {ActivityIndicator,Pressable,StyleSheet,Text,TextInput,View} from 'react-native';
+const C={ink:'#142D42',muted:'#708294',teal:'#087E8B',mint:'#E8F6F4',line:'#E5EDF1',white:'#FFFFFF',gold:'#F4B860'};
 export function Heading({children}:{children:React.ReactNode}){return <Text style={s.heading}>{children}</Text>}
 export function Body({children}:{children:React.ReactNode}){return <Text style={s.body}>{children}</Text>}
-export function Field(props:React.ComponentProps<typeof TextInput>){return <TextInput placeholderTextColor="#98A6B7" textAlign="right" style={s.field} {...props}/>}
-export function Action({title,onPress,disabled}:{title:string;onPress:()=>void;disabled?:boolean}){return <Pressable disabled={disabled} onPress={onPress} style={[s.action,disabled&&{opacity:.55}]}><Text style={s.actionText}>{title}</Text></Pressable>}
-export function Loading(){return <ActivityIndicator size="large" color="#087E8B" style={{margin:24}}/>}
-export function Item({title,subtitle,onPress,icon}:{title:string;subtitle?:string;onPress?:()=>void;icon?:string}){return <Pressable onPress={onPress} style={s.item}><View style={s.iconBox}><Text style={s.icon}>{icon||'✦'}</Text></View><View style={{flex:1}}><Text style={s.itemTitle}>{title}</Text>{!!subtitle&&<Text style={s.sub}>{subtitle}</Text>}</View><Text style={s.arrow}>‹</Text></Pressable>}
-const s=StyleSheet.create({
- heading:{fontSize:24,fontWeight:'900',color:'#123047',textAlign:'right',marginBottom:14,marginTop:8},
- body:{fontSize:15,color:'#586B7D',textAlign:'right',lineHeight:25,marginBottom:5},
- field:{backgroundColor:'#fff',borderWidth:1,borderColor:'#DFE8EC',borderRadius:16,paddingHorizontal:16,paddingVertical:14,fontSize:16,marginVertical:8,color:'#123047',shadowColor:'#123047',shadowOpacity:.035,shadowRadius:8,elevation:1},
- action:{backgroundColor:'#087E8B',borderRadius:16,padding:16,alignItems:'center',marginTop:12,shadowColor:'#087E8B',shadowOpacity:.12,shadowRadius:8,elevation:2},
- actionText:{color:'#fff',fontWeight:'800',fontSize:16},
- item:{backgroundColor:'#fff',padding:14,borderRadius:18,marginVertical:7,flexDirection:'row',alignItems:'center',gap:12,borderWidth:1,borderColor:'#E8EFF2',shadowColor:'#123047',shadowOpacity:.04,shadowRadius:8,elevation:1},
- itemTitle:{fontSize:16,fontWeight:'800',color:'#123047',textAlign:'right'},
- sub:{fontSize:13,color:'#708294',textAlign:'right',marginTop:5,lineHeight:20},
- arrow:{fontSize:26,color:'#087E8B',paddingLeft:2},
- iconBox:{width:48,height:48,borderRadius:15,backgroundColor:'#E8F5F5',alignItems:'center',justifyContent:'center'},
- icon:{fontSize:23},});
+export function Field(props:React.ComponentProps<typeof TextInput>){return <TextInput placeholderTextColor="#9AAAB8" textAlign="right" style={s.field} {...props}/>}
+export function Action({title,onPress,disabled}:{title:string;onPress:()=>void;disabled?:boolean}){return <Pressable disabled={disabled} onPress={onPress} style={({pressed})=>[s.action,disabled&&{opacity:.5},pressed&&{opacity:.85}]}><Text style={s.actionText}>{title}</Text></Pressable>}
+export function Loading(){return <ActivityIndicator size="large" color={C.teal} style={{margin:24}}/>}
+export function Item({title,subtitle,onPress,icon}:{title:string;subtitle?:string;onPress?:()=>void;icon?:string}){return <Pressable onPress={onPress} style={({pressed})=>[s.item,pressed&&{opacity:.8}]}><View style={s.iconBox}><Text style={s.icon}>{icon||'✦'}</Text></View><View style={{flex:1}}><Text style={s.itemTitle}>{title}</Text>{!!subtitle&&<Text style={s.sub}>{subtitle}</Text>}</View><Text style={s.arrow}>‹</Text></Pressable>}
+export function Pill({children}:{children:React.ReactNode}){return <View style={s.pill}><Text style={s.pillText}>{children}</Text></View>}
+export function Panel({children}:{children:React.ReactNode}){return <View style={s.panel}>{children}</View>}
+const s=StyleSheet.create({heading:{fontSize:24,fontWeight:'900',color:C.ink,textAlign:'right',marginBottom:14,marginTop:12},body:{fontSize:15,color:C.muted,textAlign:'right',lineHeight:25,marginBottom:6},field:{backgroundColor:C.white,borderWidth:1,borderColor:C.line,borderRadius:18,paddingHorizontal:16,paddingVertical:15,fontSize:16,marginVertical:8,color:C.ink},action:{backgroundColor:C.teal,borderRadius:18,padding:16,alignItems:'center',marginTop:12},actionText:{color:C.white,fontWeight:'800',fontSize:16},item:{backgroundColor:C.white,padding:15,borderRadius:20,marginVertical:8,flexDirection:'row',alignItems:'center',gap:12,borderWidth:1,borderColor:C.line},itemTitle:{fontSize:16,fontWeight:'800',color:C.ink,textAlign:'right'},sub:{fontSize:13,color:C.muted,textAlign:'right',marginTop:5,lineHeight:20},arrow:{fontSize:26,color:C.teal},iconBox:{width:52,height:52,borderRadius:17,backgroundColor:C.mint,alignItems:'center',justifyContent:'center'},icon:{fontSize:24},pill:{backgroundColor:C.mint,alignSelf:'flex-start',borderRadius:20,paddingHorizontal:12,paddingVertical:7},pillText:{fontSize:12,color:C.teal,fontWeight:'800'},panel:{backgroundColor:C.white,borderColor:C.line,borderWidth:1,borderRadius:22,padding:16,marginVertical:10}});

@@ -195,7 +195,7 @@ export class AppointmentsService {
     return {
       items: appointments.map((a) => {
         const profile = profileByUser.get(a.doctorId);
-        const beneficiary = beneficiaryById.get(a.beneficiaryId);
+        const beneficiary = a.beneficiaryId ? beneficiaryById.get(a.beneficiaryId) : undefined;
         return {
           id: a.id,
           status: a.status,

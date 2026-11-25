@@ -47,7 +47,7 @@ export class AuthService implements OnModuleInit {
   const since=new Date(Date.now()-15*60*1000);
   const identifierFailures=await this.securityEvents.count({where:{identifierHash,succeeded:false,createdAt:MoreThan(since)}});
   const ipFailures=await this.securityEvents.count({where:{ipHash,succeeded:false,createdAt:MoreThan(since)}});
-  if(identifierFailures>=5||ipFailures>=30) throw new HttpException('تم إيقاف محاولات تسجيل الدخول مؤقتاً لحماية الحساب. حاول مجدداً بعد 15 دقيقة.');
+  if(identifierFailures>=5||ipFailures>=30) throw new HttpException('تم إيقاف محاولات تسجيل الدخول مؤقتاً لحماية الحساب. حاول مجدداً بعد 15 دقيقة.', HttpStatus.TOO_MANY_REQUESTS);
 
   const user=await this.users.findByIdentifier(identifier.trim());
   const passwordMatches=!!user && await bcrypt.compare(password,user.passwordHash);

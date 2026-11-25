@@ -27,7 +27,7 @@ export class OtpService {
   if(await this.users.findByIdentifier(value)) throw new ConflictException('رقم الهاتف أو البريد مستخدم في حساب آخر.');
   const changePurpose=contactType==='email'?OtpPurpose.CHANGE_EMAIL:OtpPurpose.CHANGE_PHONE;
   const recent=await this.repo.findOne({where:{userId,purpose:changePurpose,createdAt:MoreThan(new Date(Date.now()-this.resend))},order:{createdAt:'DESC'}});
-  if(recent) throw new HttpException('انتظر دقيقة قبل طلب رمز جديد.', HttpStatus.TOO_MANY_REQUESTS);
+  if(recent) throw new HttpException('انتظر دقيقة قبل طلب رمز جديد.', HttpStatus.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS);
   const code=String(randomInt(0,1000000)).padStart(6,'0');
   const row=this.repo.create({userId,target:value,purpose:changePurpose,codeHash:await bcrypt.hash(code,10),expiresAt:new Date(Date.now()+this.ttl),consumedAt:null,attempts:0});
   await this.repo.save(row);
@@ -58,7 +58,7 @@ export class OtpService {
   if(purpose===OtpPurpose.VERIFY_ACCOUNT&&user.isVerified) return {message:'الحساب موثّق مسبقاً.'};
   if(purpose===OtpPurpose.RESET_PASSWORD&&!user.isVerified) return generic;
   const recent=await this.repo.findOne({where:{userId:user.id,purpose,target,createdAt:MoreThan(new Date(Date.now()-this.resend))},order:{createdAt:'DESC'}});
-  if(recent) throw new HttpException('انتظر دقيقة قبل طلب رمز جديد', HttpStatus.TOO_MANY_REQUESTS);
+  if(recent) throw new HttpException('انتظر دقيقة قبل طلب رمز جديد', HttpStatus.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS);
   const code=String(randomInt(0,1000000)).padStart(6,'0');
   const row=this.repo.create({userId:user.id,target,purpose,
    codeHash:await bcrypt.hash(code,10),expiresAt:new Date(Date.now()+this.ttl),consumedAt:null,attempts:0});

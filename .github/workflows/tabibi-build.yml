@@ -126,6 +126,13 @@ jobs:
         run: npx expo prebuild --platform android --clean
         env:
           EXPO_PUBLIC_DEMO_MODE: '1'
+      - name: Align Kotlin with Compose compiler
+        run: |
+          if grep -q '^android.kotlinVersion=' android/gradle.properties; then
+            sed -i 's/^android.kotlinVersion=.*/android.kotlinVersion=1.9.25/' android/gradle.properties
+          else
+            echo 'android.kotlinVersion=1.9.25' >> android/gradle.properties
+          fi
       - name: Build installable Android APK
         run: |
           chmod +x android/gradlew

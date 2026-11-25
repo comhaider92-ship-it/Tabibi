@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { IsNull, MoreThan, Repository } from 'typeorm';
+import { In, IsNull, MoreThan, Repository } from 'typeorm';
 import { createReadStream } from 'fs';
 import { mkdir, chmod, writeFile, unlink } from 'fs/promises';
 import { basename, join, resolve } from 'path';
@@ -98,8 +98,8 @@ export class UploadsService {
     const doctorIds = doctorProfiles.map(x => x.userId);
     const facilityIds = facilities.map(x => x.id);
     const rows = await this.assets.find({ where: [
-      ...(doctorIds.length ? [{ ownerUserId: require('typeorm').In(doctorIds), category: UploadCategory.DOCTOR_QUALIFICATION }] : []),
-      ...(facilityIds.length ? [{ facilityId: require('typeorm').In(facilityIds), category: UploadCategory.FACILITY_DOCUMENT }] : []),
+      ...(doctorIds.length ? [{ ownerUserId: In(doctorIds), category: UploadCategory.DOCTOR_QUALIFICATION }] : []),
+      ...(facilityIds.length ? [{ facilityId: In(facilityIds), category: UploadCategory.FACILITY_DOCUMENT }] : []),
     ], order: { createdAt: 'ASC' } });
     return rows;
   }

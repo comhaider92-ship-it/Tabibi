@@ -1,0 +1,6 @@
+import { MigrationInterface, QueryRunner } from 'typeorm';
+export class CreateAdvertisements1732900000000 implements MigrationInterface {
+ name='CreateAdvertisements1732900000000';
+ public async up(queryRunner:QueryRunner):Promise<void>{await queryRunner.query(`CREATE TABLE "advertisements" ("id" uuid NOT NULL DEFAULT gen_random_uuid(),"advertiserName" varchar(160) NOT NULL,"title" varchar(160) NOT NULL,"description" text,"imageUrl" text,"targetUrl" text,"placement" varchar(20) NOT NULL DEFAULT 'home',"status" varchar(16) NOT NULL DEFAULT 'draft',"startsAt" timestamptz NOT NULL,"endsAt" timestamptz NOT NULL,"priceIqd" integer NOT NULL DEFAULT 0,"paidAmountIqd" integer NOT NULL DEFAULT 0,"paymentReference" varchar(120),"impressions" integer NOT NULL DEFAULT 0,"clicks" integer NOT NULL DEFAULT 0,"createdBy" uuid NOT NULL,"ownerNote" text,"createdAt" timestamptz NOT NULL DEFAULT now(),"updatedAt" timestamptz NOT NULL DEFAULT now(),CONSTRAINT "PK_advertisements_id" PRIMARY KEY ("id"))`);await queryRunner.query(`CREATE INDEX "ix_advertisements_status_dates" ON "advertisements" ("status","startsAt","endsAt")`);await queryRunner.query(`CREATE INDEX "ix_advertisements_placement_status" ON "advertisements" ("placement","status")`);}
+ public async down(queryRunner:QueryRunner):Promise<void>{await queryRunner.query(`DROP TABLE "advertisements"`);}
+}

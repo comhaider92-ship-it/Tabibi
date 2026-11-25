@@ -1,0 +1,36 @@
+from pathlib import Path
+root=Path(__file__).parent
+checks=[]
+def check(name, ok):
+    checks.append((name, bool(ok)))
+
+otp=(root/'src/auth/otp-delivery.service.ts').read_text()
+otp_service=(root/'src/auth/otp.service.ts').read_text()
+check('SMTP email delivery adapter', all(x in otp for x in ['SMTP_HOST','SMTP_USER','SMTP_PASSWORD','SMTP_FROM','sendMail']))
+check('Provider-neutral SMS HTTP adapter', all(x in otp for x in ['SMS_API_URL','SMS_API_TOKEN','Authorization','JSON.stringify({ to: target, message, sender })']))
+check('Production OTP never logs code', "NODE_ENV') !== 'production'" in otp and 'DEV OTP' in otp)
+check('Failed OTP delivery deletes pending code', "this.repo.delete({ id: row.id })" in otp_service)
+sub=(root/'src/subscriptions/subscriptions.service.ts').read_text()
+check('First-time approval distinguished from renewal', 'requiresOwnerApproval=!priorApproved' in sub)
+check('Renewal requires payment confirmation rather than approval', 'confirmRenewalPayment' in sub and 'row.requiresOwnerApproval' in sub)
+check('Renewal extends from current expiry', 'active.expiresAt>now?active.expiresAt:now' in sub)
+check('Owner dashboard splits first approvals and renewal payments', 'pendingOwnerReview,pendingRenewalPayments' in sub)
+owner_screen=(root/'mobile/src/screens/ProviderDashboardScreen.tsx').read_text()
+check('Main owner dashboard separates first approvals from renewal payment checks', 'اشتراكات أول مرة بانتظار الموافقة' in owner_screen and 'تجديدات بانتظار تأكيد الدفعة' in owner_screen)
+migration=(root/'src/database/migrations/1733300000000-SubscriptionRenewalWithoutReapproval.ts').read_text()
+check('Renewal migration exists', 'ADD COLUMN \"requiresOwnerApproval\"' in migration)
+check('Existing pending renewals inherit prior approval', 'pending.status = \'pending\'' in migration and "prior.status IN ('active','expired')" in migration)
+controller=(root/'src/subscriptions/subscriptions.controller.ts').read_text()
+check('Owner-only renewal payment endpoint', "@Patch('owner/subscriptions/:id/renewal-payment') @Roles(UserRole.OWNER)" in controller)
+mobile=(root/'mobile/src/notifications/registerPush.ts').read_text()
+check('Mobile obtains and registers native push token', 'getDevicePushTokenAsync' in mobile and 'registerPushDevice' in mobile)
+app=(root/'mobile/App.tsx').read_text()
+check('Push token registration follows authenticated role', 'registerPushDevice()' in app and 'removePushDevice(pushDeviceId)' in app)
+client=(root/'mobile/src/api/client.ts').read_text()
+check('Mobile API supports push registration and removal', 'registerPushDevice:' in client and 'removePushDevice:' in client)
+check('V46 TypeORM CLI entities are imported', "import { BookingConversationMute }" in (root/'src/database/data-source.ts').read_text() and "import { BookingMessageReport }" in (root/'src/database/data-source.ts').read_text())
+check('Deployment documentation records real provider prerequisites', 'No real SMS vendor credentials' in (root/'docs/phase-v50-external-delivery-and-renewals.md').read_text())
+for name,ok in checks:
+    print(('PASS' if ok else 'FAIL')+' '+name)
+print(f'RESULT: {sum(ok for _,ok in checks)}/{len(checks)}')
+raise SystemExit(0 if all(ok for _,ok in checks) else 1)

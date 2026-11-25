@@ -58,7 +58,7 @@ export class OtpService {
   if(purpose===OtpPurpose.VERIFY_ACCOUNT&&user.isVerified) return {message:'الحساب موثّق مسبقاً.'};
   if(purpose===OtpPurpose.RESET_PASSWORD&&!user.isVerified) return generic;
   const recent=await this.repo.findOne({where:{userId:user.id,purpose,target,createdAt:MoreThan(new Date(Date.now()-this.resend))},order:{createdAt:'DESC'}});
-  if(recent) throw new HttpException('انتظر دقيقة قبل طلب رمز جديد', HttpStatus.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS);
+  if(recent) throw new HttpException('انتظر دقيقة قبل طلب رمز جديد', HttpStatus.TOO_MANY_REQUESTS);
   const code=String(randomInt(0,1000000)).padStart(6,'0');
   const row=this.repo.create({userId:user.id,target,purpose,
    codeHash:await bcrypt.hash(code,10),expiresAt:new Date(Date.now()+this.ttl),consumedAt:null,attempts:0});
@@ -76,7 +76,7 @@ export class OtpService {
   const target=this.normalizeTarget(identifier);
   const user=await this.users.findByIdentifier(target);
   if(!user||!user.isActive) throw new BadRequestException('الرمز غير صالح أو منتهي الصلاحية');
-  const row=await this.repo.findOne({where:{userId:user.id,purpose,target,consumedAt:null,expiresAt:MoreThan(new Date())},
+  const row=await this.repo.findOne({where:{userId:user.id,purpose,target,consumedAt:IsNull(),expiresAt:MoreThan(new Date())},
    order:{createdAt:'DESC'},select:['id','userId','target','purpose','codeHash','expiresAt','consumedAt','attempts','createdAt']});
   if(!row||row.attempts>=this.maxAttempts) throw new BadRequestException('الرمز غير صالح أو منتهي الصلاحية');
   row.attempts+=1;

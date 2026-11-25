@@ -1,4 +1,4 @@
-import { IsIn, IsString, Length } from 'class-validator';
+import { IsIn, IsString, Length, Matches } from 'class-validator';
 export class ConfirmContactChangeDto {
  @IsIn(['phone','email']) contactType:'phone'|'email';
  @IsString() @Length(3,254) value:string;

@@ -82,10 +82,17 @@ jobs:
           fi
       - name: Create complete source archive
         run: |
-          zip -qr TABIBI_v109_FIXED.zip . \
-            -x ".git/*" "node_modules/*" "*/node_modules/*" \
-               "mobile/.expo/*" "dist/*" "mobile/dist/*" "build/*" \
-               "TABIBI_v*.zip" "*.zip" ".env" "**/.env"
+          rm -f TABIBI_v109_FIXED.zip
+          find . -type f \
+            ! -path './.git/*' \
+            ! -path '*/node_modules/*' \
+            ! -path './mobile/.expo/*' \
+            ! -path './dist/*' \
+            ! -path './mobile/dist/*' \
+            ! -path './build/*' \
+            ! -name '*.zip' \
+            ! -name '.env' \
+            -print0 | xargs -0 zip -q TABIBI_v109_FIXED.zip
       - uses: actions/upload-artifact@v4
         with:
           name: tabibi-v109-fixed

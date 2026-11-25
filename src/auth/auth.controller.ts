@@ -45,6 +45,7 @@ export class AuthController {
   if(!user) return null;
   if(user.role!=='patient') throw new ForbiddenException('تعديل هذا الملف متاح لحساب المريض فقط.');
   const updated=await this.users.updateDisplayName(user.id,dto.displayName);
+  if(!updated) throw new UnauthorizedException('تعذر تحديث بيانات الحساب.');
   return {id:updated.id,displayName:updated.displayName,email:updated.email,phone:updated.phone,role:updated.role,isVerified:updated.isVerified};
  }
  @Post('me/password/change') @UseGuards(JwtAuthGuard)

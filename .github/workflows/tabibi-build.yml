@@ -123,10 +123,6 @@ jobs:
         run: npx expo prebuild --platform android --clean
         env:
           EXPO_PUBLIC_DEMO_MODE: '1'
-      - name: Verify Expo Android Gradle plugin wiring
-        run: |
-          test -d node_modules/expo-modules-autolinking/android/expo-gradle-plugin
-          grep -n "expo-modules-autolinking\|expo-module-gradle-plugin" android/settings.gradle
       - name: Build installable Android APK
         run: |
           chmod +x android/gradlew

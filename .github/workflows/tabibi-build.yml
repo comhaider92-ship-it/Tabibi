@@ -128,36 +128,23 @@ jobs:
           EXPO_PUBLIC_DEMO_MODE: '1'
       - name: Align Kotlin with Compose compiler
         run: |
-          # Patch generated Android files and the Gradle files inside Expo/RN packages.
-          # The failing Kotlin compiler is loaded from the native dependency build classpath.
-          grep -RIl '1.9.24' android node_modules --include='*.gradle' --include='*.gradle.kts' --include='*.properties' --include='*.kt' | xargs -r sed -i 's/1.9.24/1.9.25/g'
+          # Expo SDK 52's expo-modules-core maps Kotlin 1.9.24 to Compose Compiler 1.5.14.
+          # Keep the actual Kotlin Gradle plugin and Compose compiler on this compatible pair.
           if grep -q '^android.kotlinVersion=' android/gradle.properties; then
-            sed -i 's/^android.kotlinVersion=.*/android.kotlinVersion=1.9.25/' android/gradle.properties
+            sed -i 's/^android.kotlinVersion=.*/android.kotlinVersion=1.9.24/' android/gradle.properties
           else
-            echo 'android.kotlinVersion=1.9.25' >> android/gradle.properties
+            echo 'android.kotlinVersion=1.9.24' >> android/gradle.properties
           fi
           python - <<'PY'
           from pathlib import Path
-          p = Path("android/settings.gradle")
+          p = Path("node_modules/expo-modules-core/android/build.gradle")
           s = p.read_text()
-          marker = "pluginManagement {"
-          rule = """pluginManagement {
-              resolutionStrategy {
-                  eachPlugin {
-                      if (requested.id.id.startsWith("org.jetbrains.kotlin")) {
-                          useVersion("1.9.25")
-                      }
-                  }
-              }
-          """
-          if marker not in s:
-              raise SystemExit("Expected pluginManagement block was not generated")
-          if 'useVersion("1.9.25")' not in s:
-              s = s.replace(marker, rule, 1)
-              p.write_text(s)
+          if '"1.9.24": "1.5.14"' not in s:
+              raise SystemExit("Expected Expo Kotlin 1.9.24 / Compose Compiler 1.5.14 mapping was not found")
+          print("Verified compatible Kotlin 1.9.24 / Compose Compiler 1.5.14 mapping")
           PY
-          echo 'Remaining Kotlin version references:'
-          grep -RIn '1.9.2[45]' android node_modules --include='*.gradle' --include='*.gradle.kts' --include='*.properties' --include='*.kt' || true
+          echo 'Selected Android Kotlin version:'
+          grep '^android.kotlinVersion=' android/gradle.properties
       - name: Build installable Android APK
         run: |
           chmod +x android/gradlew

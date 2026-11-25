@@ -29,7 +29,8 @@
     "expo-notifications": "~0.29.14",
     "expo-file-system": "~18.0.12",
     "expo-sharing": "~13.0.1",
-    "expo-document-picker": "~13.0.3"
+    "expo-document-picker": "~13.0.3",
+    "expo-asset": "~11.0.5"
   },
   "devDependencies": {
     "@types/react": "~18.3.12",

@@ -102,13 +102,15 @@ jobs:
           retention-days: 30
 
   android-demo:
-    needs: [mobile]
+    needs: [mobile, package]
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: mobile
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 20

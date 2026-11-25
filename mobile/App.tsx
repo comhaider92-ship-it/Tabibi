@@ -1,4 +1,5 @@
 import React,{useState} from 'react';
+import {PreviewApp} from './src/PreviewApp';
 import {ActivityIndicator,View,Text,Pressable} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -30,7 +31,7 @@ import {NotificationHeaderButton} from './src/components/NotificationHeaderButto
 import {api,restoreAccessToken,setAccessToken} from './src/api/client';
 import {registerPushDevice} from './src/notifications/registerPush';
 const Stack=createNativeStackNavigator();
-export default function App(){
+function LiveApp(){
  const [role,setRole]=useState<string|null>(null);const [ready,setReady]=useState(false);const [pushDeviceId,setPushDeviceId]=useState<string|null>(null);const [kind,setKind]=useState<'doctors'|'facilities'>('doctors');const [query,setQuery]=useState('');const [selected,setSelected]=useState<any>(null);
  React.useEffect(()=>{let alive=true;(async()=>{try{const token=await restoreAccessToken();if(token){const user=await api.me();if(alive&&['patient','doctor','owner'].includes(user.role))setRole(user.role);else await setAccessToken(null);}}catch{await setAccessToken(null);}finally{if(alive)setReady(true);}})();return()=>{alive=false;};},[]);
  React.useEffect(()=>{let alive=true;if(role){registerPushDevice().then(id=>{if(alive&&id)setPushDeviceId(id);}).catch(()=>{});}return()=>{alive=false;};},[role]);
@@ -70,4 +71,11 @@ export default function App(){
   <Stack.Screen name="PatientProfile" options={{title:'ملفي الشخصي'}}>{()=> <PatientProfileScreen onLogout={logout}/>}</Stack.Screen>
  </>}
  </Stack.Navigator></NavigationContainer>;
+}
+
+
+// Demo mode is a separate offline UI. Normal builds keep the real API-backed app.
+export default function App(){
+ if(process.env.EXPO_PUBLIC_DEMO_MODE==='1') return <PreviewApp/>;
+ return <LiveApp/>;
 }

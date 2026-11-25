@@ -1,4 +1,5 @@
 name: Tabibi build verification
+# Rebuild Android demo after aligning Expo SDK 52 native modules
 
 permissions:
   contents: write

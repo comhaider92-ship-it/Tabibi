@@ -99,3 +99,38 @@ jobs:
           path: TABIBI_v109_FIXED.zip
           if-no-files-found: error
           retention-days: 30
+
+  android-demo:
+    needs: [mobile]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install mobile dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Generate Android project for offline demo
+        run: npx expo prebuild --platform android --no-install
+        env:
+          EXPO_PUBLIC_DEMO_MODE: '1'
+      - name: Build installable Android APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          EXPO_PUBLIC_DEMO_MODE=1 ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tabibi-demo-apk
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30

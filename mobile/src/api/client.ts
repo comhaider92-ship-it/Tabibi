@@ -103,7 +103,7 @@ export const api = {
   revokeMedicalShare: (id:string) => request<any>(`/medical-records/share-consents/${encodeURIComponent(id)}`,{method:'DELETE'}),
   revokeMedicalSharedRecord: (consentId:string,recordId:string) => request<any>(`/medical-records/share-consents/${encodeURIComponent(consentId)}/records/${encodeURIComponent(recordId)}`,{method:'DELETE'}),
   appointment: (id:string) => request<any>(`/appointments/${id}`),
-  bookingMessages: (kind:'doctor'|'facility',id:string) => request<{items:any[]}>(kind==='doctor'?`/messages/appointments/${id}`:`/messages/facility-bookings/${id}`),
+  bookingMessages: (kind:'doctor'|'facility',id:string) => request<{items:any[];muted?:boolean;canSend?:boolean;unreadCount?:number}>(kind==='doctor'?`/messages/appointments/${id}`:`/messages/facility-bookings/${id}`),
   sendBookingMessage: (kind:'doctor'|'facility',id:string,body:string) => request<any>(kind==='doctor'?`/messages/appointments/${id}`:`/messages/facility-bookings/${id}`,{method:'POST',body:JSON.stringify({body})}),
   muteBookingConversation: (kind:'doctor'|'facility',id:string,muted:boolean) => request<any>(kind==='doctor'?`/messages/appointments/${id}/mute`:`/messages/facility-bookings/${id}/mute`,{method:'PATCH',body:JSON.stringify({muted})}),
   bookingUnreadCount: (kind:'doctor'|'facility',id:string) => request<{unreadCount:number}>(kind==='doctor'?`/messages/appointments/${id}/unread-count`:`/messages/facility-bookings/${id}/unread-count`),

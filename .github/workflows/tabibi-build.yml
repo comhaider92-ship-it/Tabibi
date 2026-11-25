@@ -1,5 +1,8 @@
 name: Tabibi build verification
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [main]
@@ -44,3 +47,48 @@ jobs:
         run: npm run typecheck
       - name: Validate Expo app configuration
         run: npx expo config --type public
+
+  package:
+    needs: [backend, mobile]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Generate reviewed npm lockfiles
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          cd mobile
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          cd ..
+      - name: Verify clean installs from lockfiles
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          cd mobile
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npx expo config --type public
+          cd ..
+      - name: Commit reproducible dependency lockfiles
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json mobile/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Add verified npm lockfiles"
+            git push origin HEAD:main
+          fi
+      - name: Create complete source archive
+        run: |
+          zip -qr TABIBI_v109_FIXED.zip . \
+            -x ".git/*" "node_modules/*" "*/node_modules/*" \
+               "mobile/.expo/*" "dist/*" "mobile/dist/*" "build/*" \
+               "TABIBI_v*.zip" "*.zip" ".env" "**/.env"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tabibi-v109-fixed
+          path: TABIBI_v109_FIXED.zip
+          if-no-files-found: error
+          retention-days: 30

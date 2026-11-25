@@ -4,7 +4,7 @@ import {Screen} from './components/Screen';
 import {Action,Body,Field,Heading,Item} from './components/UI';
 
 type Role='patient'|'doctor'|'owner';
-const colors={ink:'#172B4D',muted:'#506176',teal:'#087E8B',pale:'#EAF5F6'};
+const colors={ink:'#123047',muted:'#65798B',teal:'#087E8B',pale:'#E7F4F4',gold:'#F3B65A'};
 const doctors=[
  {name:'د. أحمد علي',spec:'طب الأطفال',city:'البصرة',clinic:'عيادة الأمل',days:'الأحد والثلاثاء والخميس'},
  {name:'د. زهراء كريم',spec:'أمراض النساء',city:'البصرة',clinic:'مركز الحياة الطبي',days:'السبت والاثنين والأربعاء'},
@@ -16,7 +16,7 @@ const facilities=[
 ];
 export function PreviewApp(){
  const [role,setRole]=useState<Role|null>(null);
- const [page,setPage]=useState('home');
+ const [page,setPage]=useState('home');\n const [history,setHistory]=useState<string[]>([]);
  const [query,setQuery]=useState('');
  const [selected,setSelected]=useState<any>(null);
  const [booked,setBooked]=useState(false);
@@ -34,11 +34,11 @@ export function PreviewApp(){
  const button=(label:string,fn:()=>void)=> <Action title={label} onPress={fn}/>;
  const note=(s:string)=><View style={{backgroundColor:colors.pale,borderRadius:12,padding:12,marginVertical:8}}><Text style={{textAlign:'right',color:colors.ink,lineHeight:23}}>{s}</Text></View>;
  const header=<><Heading>طبيبي</Heading><Body>نسخة معاينة للواجهات — بيانات تجريبية فقط</Body><View style={{marginTop:10,marginBottom:14}}><Text style={{textAlign:'right',color:colors.teal,fontWeight:'800'}}>{title}</Text><Pressable onPress={back}><Text style={{textAlign:'right',color:colors.muted,marginTop:8}}>‹ رجوع / تغيير الدور</Text></Pressable></View></>;
- if(!role)return <Screen><Heading>مرحباً بك في طبيبي</Heading><Body>اختر الواجهة التي تريد استعراضها. لا تحتاج هذه المعاينة إلى تسجيل دخول أو خادم.</Body>{note('هذه نسخة عرض منفصلة. الأزرار تعرض تنقلاً وبيانات توضيحية، ولا تنشئ حسابات أو حجوزات حقيقية.')}{button('استعراض واجهة المريض',()=>{setRole('patient');go('home');})}{button('استعراض واجهة الطبيب',()=>{setRole('doctor');go('home');})}{button('استعراض لوحة المالك',()=>{setRole('owner');go('home');})}</Screen>;
+ if(!role)return <Screen><View style={{backgroundColor:'#087E8B',borderRadius:26,padding:24,marginBottom:18}}><Text style={{fontSize:34,fontWeight:'900',color:'#fff',textAlign:'right'}}>طبيبي ✚</Text><Text style={{fontSize:17,color:'#E5F6F5',textAlign:'right',marginTop:8}}>منصة حجز ومتابعة الخدمات الطبية</Text></View><Heading>مرحباً بك</Heading><Body>اختر الواجهة التي تريد استعراضها. لا تحتاج المعاينة إلى تسجيل دخول أو خادم.</Body>{note('نسخة عرض منفصلة ببيانات تجريبية. لا تنشئ حسابات أو حجوزات حقيقية.')}{button('👤  استعراض واجهة المريض',()=>{setRole('patient');go('home');})}{button('🩺  استعراض واجهة الطبيب',()=>{setRole('doctor');go('home');})}{button('⚙️  استعراض لوحة المالك',()=>{setRole('owner');go('home');})}</Screen>;
  return <Screen>{header}
- {role==='patient'&&page==='home'&&<><Heading>الرعاية الصحية أقرب إليك</Heading><Field value={query} onChangeText={setQuery} placeholder="ابحث عن طبيب أو مختبر أو خدمة"/>{button('البحث عن طبيب',()=>go('doctors'))}{button('المختبرات ومراكز الفحوصات',()=>go('facilities'))}{button('حجوزاتي',()=>go('bookings'))}{button('ملفي الشخصي',()=>go('profile'))}{note('إعلان تجريبي: مركز طبي أو طبيب يمكن أن يظهر هنا.')}</>}
- {role==='patient'&&page==='doctors'&&<><Heading>الأطباء والاختصاصات</Heading>{doctors.filter(d=>(d.name+d.spec+d.city).includes(query)||!query).map((d,i)=><Item key={i} title={d.name} subtitle={d.spec+' · '+d.city+' · '+d.clinic} onPress={()=>{setSelected(d);go('detail');}}/> )}</>}
- {role==='patient'&&page==='facilities'&&<><Heading>المختبرات ومراكز الفحوصات</Heading>{facilities.map((d,i)=><Item key={i} title={d.name} subtitle={d.spec+' · '+d.city+' · '+d.clinic} onPress={()=>{setSelected(d);go('detail');}}/> )}</>}
+ {role==='patient'&&page==='home'&&<><Heading>ابحث عن الرعاية المناسبة</Heading><View style={{backgroundColor:'#E7F4F4',borderRadius:20,padding:16,marginBottom:12}}><Text style={{fontSize:18,fontWeight:'800',color:colors.ink,textAlign:'right'}}>أهلاً بك 👋</Text><Text style={{color:colors.muted,textAlign:'right',marginTop:6}}>اكتشف الأطباء والمراكز واحجز بسهولة</Text></View><Field value={query} onChangeText={setQuery} placeholder="ابحث عن طبيب أو مختبر أو خدمة"/>{button('🩺  الأطباء والاختصاصات',()=>go('doctors'))}{button('🧪  المختبرات ومراكز الفحوصات',()=>go('facilities'))}{button('📅  حجوزاتي',()=>go('bookings'))}{button('👤  ملفي الشخصي',()=>go('profile'))}{note('إعلان تجريبي: مركز طبي أو طبيب يمكن أن يظهر هنا.')}</>}
+ {role==='patient'&&page==='doctors'&&<><Heading>الأطباء والاختصاصات</Heading>{doctors.filter(d=>(d.name+d.spec+d.city+d.clinic).includes(query)||!query).map((d,i)=><Item key={i} icon={d.spec.includes('أطفال')?'🧸':d.spec.includes('نساء')?'🌷':'❤️'} title={d.name} subtitle={d.spec+' · '+d.city+' · '+d.clinic} onPress={()=>{setSelected(d);go('detail');}}/> )}</>}
+ {role==='patient'&&page==='facilities'&&<><Heading>المختبرات ومراكز الفحوصات</Heading>{facilities.map((d,i)=><Item key={i} icon={d.spec.includes('مختبر')?'🧪':'🩻'} title={d.name} subtitle={d.spec+' · '+d.city+' · '+d.clinic} onPress={()=>{setSelected(d);go('detail');}}/> )}</>}
  {role==='patient'&&page==='detail'&&<><Heading>{selected?.name}</Heading><Body>{selected?.spec} · {selected?.city}</Body>{note('المواعيد المتاحة: '+(selected?.days||'طوال أيام الأسبوع'))}{button('حجز موعد',()=>go('booking'))}</>}
  {role==='patient'&&page==='booking'&&<><Heading>تأكيد الحجز</Heading><Body>الجهة: {selected?.name||'الطبيب المختار'}</Body><Field value={patientName} onChangeText={setPatientName} placeholder="اسم المراجع"/>{button('تأكيد حجز تجريبي',()=>{setBooked(true);go('bookings');Alert.alert('معاينة فقط','تم عرض حجز تجريبي محلياً، ولم يُرسل إلى خادم.');})}</>}
  {role==='patient'&&page==='bookings'&&<><Heading>حجوزاتي</Heading>{booked?<Item title="حجز تجريبي" subtitle={(selected?.name||'الطبيب')+' · بانتظار التأكيد (بيانات عرض)'}/>:<Body>لا توجد حجوزات في المعاينة بعد. يمكنك تجربة البحث وإنشاء حجز توضيحي.</Body>}{button('العودة للبحث',()=>go('doctors'))}</>}

@@ -13,10 +13,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
       - name: Install backend dependencies
         run: npm install --no-audit --no-fund
       - name: Build backend
         run: npm run build
+      - name: Check database migration readiness
+        run: npm run check:migrations
+      - name: Run retained V100-V108 regression checks
+        run: |
+          for version in 100 101 102 103 104 105 106 107 108; do
+            python scripts_verify_v${version}.py
+          done
 
   mobile:
     runs-on: ubuntu-latest
@@ -32,3 +42,5 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Type-check mobile app
         run: npm run typecheck
+      - name: Validate Expo app configuration
+        run: npx expo config --type public

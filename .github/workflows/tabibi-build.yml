@@ -136,6 +136,28 @@ jobs:
           else
             echo 'android.kotlinVersion=1.9.25' >> android/gradle.properties
           fi
+          # Force Kotlin plugin resolution to the version required by Compose compiler 1.5.15.
+          # Expo prebuild's ext.kotlinVersion alone does not override every plugin request.
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("android/settings.gradle")
+          s = p.read_text()
+          marker = "pluginManagement {"
+          rule = """pluginManagement {
+              resolutionStrategy {
+                  eachPlugin {
+                      if (requested.id.id.startsWith("org.jetbrains.kotlin")) {
+                          useVersion("1.9.25")
+                      }
+                  }
+              }
+          """
+          if marker not in s:
+              raise SystemExit("Expected pluginManagement block was not generated")
+          if 'useVersion("1.9.25")' not in s:
+              s = s.replace(marker, rule, 1)
+              p.write_text(s)
+          PY
           echo 'Effective Kotlin version references after patch:'
           grep -RIn '1.9.2[45]' android --include='*.gradle' --include='*.gradle.kts' --include='*.properties' || true
       - name: Build installable Android APK

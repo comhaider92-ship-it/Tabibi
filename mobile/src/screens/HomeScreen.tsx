@@ -12,7 +12,7 @@ export function HomeScreen({onSearch,onBookings,onProfile,onHealthFile,onAdTarge
  const [q,setQ]=useState('');const [cats,setCats]=useState<{doctors:{code:string;name:string}[];diagnostics:{code:string;name:string}[]}|null>(null);const [busy,setBusy]=useState(true);const [ad,setAd]=useState<any>(null);
  useEffect(()=>{api.categories().then(setCats).catch(e=>Alert.alert('تعذر تحميل الأقسام',e.message)).finally(()=>setBusy(false));api.publicAds('home').then(rows=>{const first=rows?.[0];if(first){setAd(first);api.recordAdImpression(first.id).catch(()=>{});}}).catch(()=>{});},[]);
  const openAd=async()=>{if(!ad)return;try{await api.recordAdClick(ad.id);if(ad.targetType&&ad.targetType!=='none'&&ad.targetId){onAdTarget(ad);return;}if(ad.targetUrl)await Linking.openURL(ad.targetUrl);}catch{Alert.alert('تعذر فتح الإعلان','تحقق من اتصال الإنترنت أو رابط الإعلان.');}};
- const search=(kind:'doctors'|'facilities',text=q)=>onSearch(kind,text.trim());
+ const search=(kind:'doctors'|'facilities',text=q)=>{onSearch(kind,text.trim());setQ('');};
  return <Screen>
   <View style={{backgroundColor:'#E8F6F4',borderRadius:28,padding:20,marginBottom:14,borderWidth:1,borderColor:'#D4EBE7'}}>
    <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>

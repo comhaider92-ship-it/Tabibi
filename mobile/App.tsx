@@ -31,14 +31,23 @@ import {NotificationHeaderButton} from './src/components/NotificationHeaderButto
 import {api,restoreAccessToken,setAccessToken} from './src/api/client';
 import {registerPushDevice} from './src/notifications/registerPush';
 const Stack=createNativeStackNavigator();
-const patientTabs=[{key:'Home',label:'الرئيسية',icon:'⌂'},{key:'Bookings',label:'المواعيد',icon:'▦'},{key:'Notifications',label:'الإشعارات',icon:'♧'},{key:'PatientProfile',label:'حسابي',icon:'♙'},{key:'More',label:'المزيد',icon:'⋯'}];
+const patientTabs=[{key:'Home',label:'الرئيسية',icon:'home'},{key:'Bookings',label:'المواعيد',icon:'calendar'},{key:'Notifications',label:'الإشعارات',icon:'bell'},{key:'PatientProfile',label:'حسابي',icon:'user'},{key:'More',label:'المزيد',icon:'more'}];
+function TabGlyph({name,active}:{name:string;active:boolean}){
+ const color=active?'#078B91':'#8293A1';
+ const line={borderColor:color,borderWidth:2} as const;
+ if(name==='home')return <View style={{width:24,height:24,alignItems:'center',justifyContent:'center'}}><View style={{width:13,height:13,borderLeftWidth:2,borderTopWidth:2,borderColor:color,transform:[{rotate:'45deg'}],position:'absolute',top:3}}/><View style={{width:15,height:12,borderTopWidth:2,borderLeftWidth:2,borderRightWidth:2,borderColor:color,position:'absolute',bottom:2,borderTopLeftRadius:2,borderTopRightRadius:2}}/><View style={{width:4,height:7,backgroundColor:color,position:'absolute',bottom:2,borderTopLeftRadius:2,borderTopRightRadius:2}}/></View>;
+ if(name==='calendar')return <View style={[{width:19,height:18,borderRadius:5,alignItems:'center',justifyContent:'center'},line]}><View style={{position:'absolute',top:4,left:0,right:0,height:2,backgroundColor:color}}/><View style={{flexDirection:'row',gap:3,marginTop:6}}><View style={{width:3,height:3,borderRadius:2,backgroundColor:color}}/><View style={{width:3,height:3,borderRadius:2,backgroundColor:color}}/><View style={{width:3,height:3,borderRadius:2,backgroundColor:color}}/></View><View style={{position:'absolute',top:-4,left:4,width:2,height:6,backgroundColor:color,borderRadius:2}}/><View style={{position:'absolute',top:-4,right:4,width:2,height:6,backgroundColor:color,borderRadius:2}}/></View>;
+ if(name==='bell')return <View style={{width:22,height:24,alignItems:'center',justifyContent:'center'}}><View style={{width:15,height:16,borderTopLeftRadius:9,borderTopRightRadius:9,borderBottomLeftRadius:4,borderBottomRightRadius:4,borderWidth:2,borderColor:color,borderBottomWidth:3}}/><View style={{width:6,height:3,backgroundColor:color,borderRadius:3,marginTop:1}}/><View style={{position:'absolute',top:2,right:2,width:4,height:4,borderRadius:3,backgroundColor:active?'#E99B53':color}}/></View>;
+ if(name==='user')return <View style={{width:22,height:24,alignItems:'center',justifyContent:'center',gap:2}}><View style={[{width:8,height:8,borderRadius:5},line]}/><View style={{width:17,height:9,borderTopLeftRadius:10,borderTopRightRadius:10,borderWidth:2,borderBottomWidth:0,borderColor:color,marginTop:1}}/></View>;
+ return <View style={{width:24,height:24,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:3}}>{[0,1,2].map(i=><View key={i} style={{width:4.5,height:4.5,borderRadius:3,backgroundColor:color}}/>)}</View>;
+}
 function PatientTabBar({navigation,active}:{navigation:any;active:string}){
- return <View style={{flexDirection:'row',backgroundColor:'#FFFFFF',borderTopWidth:1,borderTopColor:'#DCEBEA',paddingTop:8,paddingBottom:7,paddingHorizontal:5}}>
-  {patientTabs.map(tab=><Pressable key={tab.key} onPress={()=>navigation.navigate(tab.key as never)} style={{flex:1,alignItems:'center',justifyContent:'center',paddingVertical:3}}>
-   <Text style={{fontSize:22,color:active===tab.key?'#078B91':'#8293A1',fontWeight:'900'}}>{tab.icon}</Text>
-   <Text style={{fontSize:10,fontWeight:active===tab.key?'900':'600',color:active===tab.key?'#078B91':'#718596',marginTop:2}}>{tab.label}</Text>
-   {active===tab.key&&<View style={{height:3,width:18,backgroundColor:'#078B91',borderRadius:3,marginTop:3}}/>}
-  </Pressable>)}
+ return <View style={{flexDirection:'row',backgroundColor:'#FFFFFF',borderTopWidth:1,borderTopColor:'#DCEBEA',paddingTop:7,paddingBottom:8,paddingHorizontal:5}}>
+  {patientTabs.map(tab=>{const selected=active===tab.key;return <Pressable key={tab.key} accessibilityRole="button" accessibilityLabel={tab.label} onPress={()=>navigation.navigate(tab.key as never)} style={{flex:1,alignItems:'center',justifyContent:'center',paddingVertical:2}}>
+   <View style={{minWidth:38,height:30,paddingHorizontal:9,borderRadius:15,backgroundColor:selected?'#E7F5F3':'transparent',alignItems:'center',justifyContent:'center'}}><TabGlyph name={tab.icon} active={selected}/></View>
+   <Text style={{fontSize:10,fontWeight:selected?'900':'600',color:selected?'#078B91':'#718596',marginTop:3}}>{tab.label}</Text>
+   {selected&&<View style={{height:2.5,width:18,backgroundColor:'#078B91',borderRadius:3,marginTop:3}}/>}
+  </Pressable>;})}
  </View>;
 }
 function PatientTabScreen({children,navigation,active}:{children:any;navigation:any;active:string}){

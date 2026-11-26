@@ -1,5 +1,5 @@
 import {
-  IsInt, IsOptional, IsString, IsUrl, Length, Max, MaxLength, Min,
+  IsInt, IsOptional, IsString, Length, Max, MaxLength, Min,
 } from 'class-validator';
 
 export class UpsertDoctorProfileDto {
@@ -13,5 +13,5 @@ export class UpsertDoctorProfileDto {
   @IsString() @Length(3, 220) address: string;
   @IsString() @Length(2, 80) city: string;
   @IsOptional() @IsString() @MaxLength(32) contactPhone?: string;
-  @IsOptional() @IsUrl({ require_protocol: true }) @MaxLength(1000) photoUrl?: string;
+  @IsOptional() @IsString() @MaxLength(1000) photoUrl?: string;
 }

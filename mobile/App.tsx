@@ -67,14 +67,33 @@ function PatientMoreScreen({navigation,onLogout}:{navigation:any;onLogout:()=>vo
   <Pressable onPress={onLogout} style={{marginTop:18,padding:16,borderRadius:16,backgroundColor:'#FFF1F0',alignItems:'center'}}><Text style={{fontSize:15,fontWeight:'800',color:'#B5473C'}}>تبديل الحساب</Text></Pressable>
  </View>;
 }
+function PortalSelectionScreen({onSelect}:{onSelect:(role:'patient'|'doctor'|'owner')=>void}){
+ const options:[ 'patient'|'doctor'|'owner',string,string,string ][]=[
+  ['patient','بوابة المريض','البحث عن الأطباء والخدمات ومتابعة الحجوزات','👤'],
+  ['doctor','بوابة الطبيب','إدارة الملف المهني والدوام والحجوزات والاشتراك','🩺'],
+  ['owner','بوابة المالك','إدارة الأطباء والمنشآت والاعتمادات والاشتراكات','⚙️']
+ ];
+ return <View style={{flex:1,backgroundColor:'#F6FAF9',padding:22,justifyContent:'center'}}>
+  <View style={{alignItems:'flex-end',marginBottom:22}}>
+   <Text style={{fontSize:34,fontWeight:'900',color:'#14545A'}}>طبيبي ✚</Text>
+   <Text style={{fontSize:15,color:'#61777A',marginTop:7}}>اختر بوابتك للمتابعة</Text>
+  </View>
+  {options.map(([role,title,description,icon])=><Pressable key={role} onPress={()=>onSelect(role)} style={{backgroundColor:'#FFFFFF',borderWidth:1,borderColor:'#DCEAE7',borderRadius:20,padding:17,marginVertical:7,flexDirection:'row',alignItems:'center',gap:13}}>
+   <View style={{width:48,height:48,borderRadius:16,backgroundColor:'#E7F4F0',alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:24}}>{icon}</Text></View>
+   <View style={{flex:1}}><Text style={{fontSize:17,fontWeight:'900',color:'#183746',textAlign:'right'}}>{title}</Text><Text style={{fontSize:12,color:'#71838A',textAlign:'right',marginTop:5,lineHeight:19}}>{description}</Text></View>
+   <Text style={{fontSize:23,color:'#087E8B'}}>‹</Text>
+  </Pressable>)}
+ </View>;
+}
 function LiveApp(){
- const [role,setRole]=useState<string|null>(null);const [ready,setReady]=useState(false);const [pushDeviceId,setPushDeviceId]=useState<string|null>(null);const [kind,setKind]=useState<'doctors'|'facilities'>('doctors');const [query,setQuery]=useState('');const [selected,setSelected]=useState<any>(null);
+ const [role,setRole]=useState<string|null>(null);const [requestedRole,setRequestedRole]=useState<'patient'|'doctor'|'owner'|null>(null);const [ready,setReady]=useState(false);const [pushDeviceId,setPushDeviceId]=useState<string|null>(null);const [kind,setKind]=useState<'doctors'|'facilities'>('doctors');const [query,setQuery]=useState('');const [selected,setSelected]=useState<any>(null);
  React.useEffect(()=>{let alive=true;(async()=>{try{const token=await restoreAccessToken();if(token){const user=await api.me();if(alive&&['patient','doctor','owner'].includes(user.role))setRole(user.role);else await setAccessToken(null);}}catch{await setAccessToken(null);}finally{if(alive)setReady(true);}})();return()=>{alive=false;};},[]);
  React.useEffect(()=>{let alive=true;if(role){registerPushDevice().then(id=>{if(alive&&id)setPushDeviceId(id);}).catch(()=>{});}return()=>{alive=false;};},[role]);
- const logout=async()=>{if(pushDeviceId)await api.removePushDevice(pushDeviceId).catch(()=>{});setPushDeviceId(null);await setAccessToken(null);setRole(null);};
+ const logout=async()=>{if(pushDeviceId)await api.removePushDevice(pushDeviceId).catch(()=>{});setPushDeviceId(null);await setAccessToken(null);setRole(null);setRequestedRole(null);};
  if(!ready)return <View style={{flex:1,alignItems:'center',justifyContent:'center',backgroundColor:'#F6F8FB'}}><ActivityIndicator size="large" color="#087E8B"/><Text style={{marginTop:12,color:'#506176'}}>جارٍ تجهيز طبيبي...</Text></View>;
- return <NavigationContainer key={role??'guest'}><Stack.Navigator screenOptions={{headerTitleAlign:'center',headerTintColor:'#087E8B'}}>
- {!role?<Stack.Screen name="Login" options={{title:'تسجيل الدخول'}}>{()=> <LoginScreen onLogin={setRole}/>}</Stack.Screen>:role==='doctor'?<>
+ if(!role&&!requestedRole)return <PortalSelectionScreen onSelect={setRequestedRole}/>;
+ return <NavigationContainer key={role??requestedRole??'guest'}><Stack.Navigator screenOptions={{headerTitleAlign:'center',headerTintColor:'#087E8B'}}>
+ {!role?<Stack.Screen name="Login" options={{title:'تسجيل الدخول'}}>{()=> <LoginScreen expectedRole={requestedRole??undefined} onBack={()=>setRequestedRole(null)} onLogin={setRole}/>}</Stack.Screen>:role==='doctor'?<>
   <Stack.Screen name="DoctorDashboard" options={{title:'بوابة الطبيب',headerRight:({tintColor,navigation}:any)=> <View style={{flexDirection:'row',alignItems:'center',gap:14}}><NotificationHeaderButton navigation={navigation} color={tintColor||'#087E8B'}/><Pressable onPress={()=>navigation.navigate('AccountSecurity' as never)}><Text style={{color:tintColor||'#087E8B',fontWeight:'700'}}>الأمان</Text></Pressable><Pressable onPress={logout}><Text style={{color:tintColor||'#087E8B',fontWeight:'700'}}>تبديل الحساب</Text></Pressable></View>}}>{({navigation})=> <DoctorDashboardScreen onManageSchedule={()=>navigation.navigate('Schedule' as never)} onManageProfile={()=>navigation.navigate('DoctorProfile' as never)} onManageSubscription={()=>navigation.navigate('DoctorSubscription' as never)}/>}</Stack.Screen>
   <Stack.Screen name="AccountSecurity" options={{title:'أمان الحساب'}}>{()=> <AccountSecurityScreen onLogout={logout}/>}</Stack.Screen>
   <Stack.Screen name="Notifications" options={{title:'الإشعارات'}}>{({navigation})=><NotificationsScreen role="doctor" onOpenRelated={()=>navigation.navigate('DoctorDashboard' as never)}/>}</Stack.Screen>

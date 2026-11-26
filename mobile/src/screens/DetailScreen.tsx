@@ -13,5 +13,40 @@ export function DetailScreen({item,kind,onBook}:{item:any;kind:'doctors'|'facili
  const openMap=async()=>{if(!hasCoordinates&&!mapAddress.trim()){Alert.alert('الموقع غير متوفر','لم تتم إضافة عنوان أو إحداثيات لهذه الجهة بعد.');return;}const query=hasCoordinates?`${latitude},${longitude}`:mapAddress;try{await Linking.openURL('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query));}catch{Alert.alert('تعذر فتح الخرائط','تأكد من توفر تطبيق خرائط أو متصفح.');}};
  const contactPhone=detail.contactPhone||detail.phone;
  const callProvider=async()=>{if(!contactPhone){Alert.alert('رقم التواصل غير متوفر','لم تتم إضافة رقم هاتف لهذه الجهة بعد.');return;}try{await Linking.openURL('tel:'+String(contactPhone).replace(/[^+0-9]/g,''));}catch{Alert.alert('تعذر الاتصال','تحقق من رقم الهاتف أو إعدادات الجهاز.');}};
- return <Screen>{photoUri&&<Image source={{uri:photoUri}} style={{width:'100%',height:170,borderRadius:20,alignSelf:'center',marginBottom:14,backgroundColor:'#E8F3F2'}} resizeMode="cover"/>}<Heading>{name}</Heading><Body>{detail.specialty||detail.description||detail.facilityType||''}</Body>{busy&&<Loading/>}{detail.subSpecialty&&<Item title="الاختصاص الدقيق" subtitle={detail.subSpecialty}/ >}{detail.qualifications&&<Item title="المؤهلات" subtitle={detail.qualifications}/ >}{detail.experienceYears!==undefined&&detail.experienceYears!==null&&<Item title="سنوات الخبرة" subtitle={`${detail.experienceYears} سنة`}/ >}{detail.ratingCount>0&&<Item title="تقييم المرضى" subtitle={`${Number(detail.ratingAverage||0).toFixed(1)} من 5 · ${detail.ratingCount} تقييم`}/ >}{detail.bio&&<><Heading>نبذة</Heading><Body>{detail.bio}</Body></>}{(detail.city||detail.address||hasCoordinates)&&<><Heading>الموقع والعنوان</Heading>{detail.city&&<Item title="المحافظة" subtitle={detail.city}/ >}{detail.address&&<Item title="العنوان المسجل" subtitle={detail.address}/ >}{hasCoordinates&&<Body>تم تسجيل إحداثيات الموقع لهذه الجهة.</Body>}<Action title="عرض الموقع والاتجاهات على الخريطة" onPress={openMap}/></>}{detail.clinicName&&<Item title="العيادة" subtitle={detail.clinicName}/ >}{contactPhone&&<><Heading>التواصل</Heading><Item title="رقم التواصل" subtitle={contactPhone}/><Action title="اتصال" onPress={callProvider}/></>}{kind==='facilities'&&<><Heading>الخدمات المتاحة</Heading>{services.length?services.map(s=><View key={s.id} style={{backgroundColor:'#fff',borderWidth:1,borderColor:'#E3EAF0',borderRadius:12,padding:12,marginVertical:5}}><Text style={{textAlign:'right',fontWeight:'800',color:'#172B4D'}}>{s.name}</Text><Text style={{textAlign:'right',color:'#68788D',marginTop:4}}>{s.expectedDurationMinutes?`المدة التقريبية: ${s.expectedDurationMinutes} دقيقة`:''}{s.priceIqd!==undefined&&s.priceIqd!==null?` · ${Number(s.priceIqd).toLocaleString('ar-IQ')} د.ع`:' '}</Text></View>):!busy&&<Body>لا توجد خدمات متاحة للعرض حالياً.</Body>}</>}{kind==='doctors'&&<Body>اختر موعداً متاحاً من جدول الطبيب. المواعيد المعروضة تُحدَّث من جدول الدوام الفعلي.</Body>}<Action title={kind==='doctors'?'عرض المواعيد والحجز':'اختيار الخدمة والموعد'} onPress={onBook}/></Screen>;
+ return <Screen>
+  {photoUri&&<Image source={{uri:photoUri}} style={{width:'100%',height:170,borderRadius:20,alignSelf:'center',marginBottom:14,backgroundColor:'#E8F3F2'}} resizeMode="cover"/>}
+  <Heading>{name}</Heading>
+  {kind==='facilities'?<Body>{detail.facilityType==='hospital'?'مستشفى وخدمات رعاية صحية':detail.facilityType==='laboratory'?'مختبر للتحاليل والفحوصات':detail.facilityType==='radiology'?'مركز أشعة وتصوير طبي':detail.facilityType==='diagnostics'?'مركز فحوصات وتشخيص':'منشأة وخدمات طبية'}</Body>:<Body>{detail.specialty||detail.description||''}</Body>}
+  {busy&&<Loading/>}
+  {kind==='doctors'&&<>
+   {detail.subSpecialty&&<Item title="الاختصاص الدقيق" subtitle={detail.subSpecialty}/>}
+   {detail.qualifications&&<Item title="المؤهلات" subtitle={detail.qualifications}/>}
+   {detail.experienceYears!==undefined&&detail.experienceYears!==null&&<Item title="سنوات الخبرة" subtitle={`${detail.experienceYears} سنة`}/>}
+   {detail.ratingCount>0&&<Item title="تقييم المرضى" subtitle={`${Number(detail.ratingAverage||0).toFixed(1)} من 5 · ${detail.ratingCount} تقييم`}/>}
+   {detail.bio&&<><Heading>نبذة عن الطبيب</Heading><Body>{detail.bio}</Body></>}
+   {detail.clinicName&&<Item title="العيادة" subtitle={detail.clinicName}/>}
+  </>}
+  {kind==='facilities'&&<>
+   {detail.description&&<><Heading>نبذة عن المنشأة</Heading><Body>{detail.description}</Body></>}
+   {detail.facilityType==='hospital'&&<Body>تعرض هذه الصفحة بيانات المستشفى والخدمات التي سجلتها الإدارة. قد تختلف الأقسام والتخصصات المتاحة بحسب ما تم إدخاله واعتماده.</Body>}
+  </>}
+  {(detail.city||detail.address||hasCoordinates)&&<>
+   <Heading>الموقع والعنوان</Heading>
+   {detail.city&&<Item title="المحافظة" subtitle={detail.city}/>}
+   {detail.address&&<Item title="العنوان المسجل" subtitle={detail.address}/>}
+   {hasCoordinates&&<Body>تم تسجيل إحداثيات الموقع لهذه الجهة.</Body>}
+   <Action title="عرض الموقع والاتجاهات على الخريطة" onPress={openMap}/>
+  </>}
+  {contactPhone&&<><Heading>التواصل</Heading><Item title="رقم التواصل" subtitle={contactPhone}/><Action title="اتصال" onPress={callProvider}/></>}
+  {kind==='facilities'&&<>
+   <Heading>الأقسام والخدمات المتاحة</Heading>
+   <Body>هذه الخدمات التي أضافتها المنشأة إلى ملفها. السعر والمدة يظهران عند تسجيلهما فقط.</Body>
+   {services.length?services.map(s=><View key={s.id} style={{backgroundColor:'#fff',borderWidth:1,borderColor:'#DCEBEA',borderRadius:15,padding:14,marginVertical:6}}>
+    <Text style={{textAlign:'right',fontWeight:'900',fontSize:15,color:'#15384D'}}>{s.name}</Text>
+    <Text style={{textAlign:'right',color:'#718596',marginTop:6,lineHeight:21}}>{s.priceIqd!==undefined&&s.priceIqd!==null?`السعر: ${Number(s.priceIqd).toLocaleString('ar-IQ')} د.ع`:'السعر: غير محدد'}{s.expectedDurationMinutes?` · المدة التقريبية: ${s.expectedDurationMinutes} دقيقة`:''}</Text>
+   </View>):!busy&&<Body>لم تسجل هذه المنشأة خدمات للعرض حالياً. يمكنك التواصل معها للاستفسار عن خدماتها.</Body>}
+  </>}
+  {kind==='doctors'&&<Body>اختر موعداً متاحاً من جدول الطبيب. المواعيد المعروضة تُحدَّث من جدول الدوام الفعلي.</Body>}
+  <Action title={kind==='doctors'?'عرض المواعيد والحجز':'اختيار الخدمة والموعد'} onPress={onBook}/>
+ </Screen>;
 }

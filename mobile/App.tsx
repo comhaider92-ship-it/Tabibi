@@ -39,6 +39,7 @@ function TabGlyph({name,active}:{name:string;active:boolean}){
  if(name==='calendar')return <View style={[{width:19,height:18,borderRadius:5,alignItems:'center',justifyContent:'center'},line]}><View style={{position:'absolute',top:4,left:0,right:0,height:2,backgroundColor:color}}/><View style={{flexDirection:'row',gap:3,marginTop:6}}><View style={{width:3,height:3,borderRadius:2,backgroundColor:color}}/><View style={{width:3,height:3,borderRadius:2,backgroundColor:color}}/><View style={{width:3,height:3,borderRadius:2,backgroundColor:color}}/></View><View style={{position:'absolute',top:-4,left:4,width:2,height:6,backgroundColor:color,borderRadius:2}}/><View style={{position:'absolute',top:-4,right:4,width:2,height:6,backgroundColor:color,borderRadius:2}}/></View>;
  if(name==='bell')return <View style={{width:22,height:24,alignItems:'center',justifyContent:'center'}}><View style={{width:15,height:16,borderTopLeftRadius:9,borderTopRightRadius:9,borderBottomLeftRadius:4,borderBottomRightRadius:4,borderWidth:2,borderColor:color,borderBottomWidth:3}}/><View style={{width:6,height:3,backgroundColor:color,borderRadius:3,marginTop:1}}/><View style={{position:'absolute',top:2,right:2,width:4,height:4,borderRadius:3,backgroundColor:active?'#E99B53':color}}/></View>;
  if(name==='user')return <View style={{width:22,height:24,alignItems:'center',justifyContent:'center',gap:2}}><View style={[{width:8,height:8,borderRadius:5},line]}/><View style={{width:17,height:9,borderTopLeftRadius:10,borderTopRightRadius:10,borderWidth:2,borderBottomWidth:0,borderColor:color,marginTop:1}}/></View>;
+ if(name==='health')return <View style={{width:22,height:22,borderRadius:8,borderWidth:2,borderColor:color,alignItems:'center',justifyContent:'center'}}><View style={{width:10,height:2,backgroundColor:color,borderRadius:2}}/><View style={{position:'absolute',width:2,height:10,backgroundColor:color,borderRadius:2}}/></View>;
  return <View style={{width:24,height:24,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:3}}>{[0,1,2].map(i=><View key={i} style={{width:4.5,height:4.5,borderRadius:3,backgroundColor:color}}/>)}</View>;
 }
 function PatientTabBar({navigation,active}:{navigation:any;active:string}){
@@ -54,12 +55,12 @@ function PatientTabScreen({children,navigation,active}:{children:any;navigation:
  return <View style={{flex:1,backgroundColor:'#F7FAFC'}}><View style={{flex:1}}>{children}</View><PatientTabBar navigation={navigation} active={active}/></View>;
 }
 function PatientMoreScreen({navigation,onLogout}:{navigation:any;onLogout:()=>void}){
- const links=[{title:'الملف الصحي',subtitle:'تقاريرك ومعلوماتك الصحية',screen:'PatientHealthFile',icon:'＋'},{title:'الملف الشخصي',subtitle:'بيانات الحساب ومعلومات التواصل',screen:'PatientProfile',icon:'◉'},{title:'حجوزاتي',subtitle:'متابعة مواعيدك الطبية',screen:'Bookings',icon:'▦'}];
+ const links=[{title:'الملف الصحي',subtitle:'تقاريرك ومعلوماتك الصحية',screen:'PatientHealthFile',icon:'health'},{title:'الملف الشخصي',subtitle:'بيانات الحساب ومعلومات التواصل',screen:'PatientProfile',icon:'user'},{title:'حجوزاتي',subtitle:'متابعة مواعيدك الطبية',screen:'Bookings',icon:'calendar'}];
  return <View style={{flex:1,backgroundColor:'#F7FAFC',padding:18}}>
   <Text style={{fontSize:24,fontWeight:'900',color:'#142D42',textAlign:'right',marginBottom:8}}>المزيد من طبيبي</Text>
   <Text style={{fontSize:14,color:'#718596',textAlign:'right',lineHeight:23,marginBottom:12}}>كل ما تحتاجه لإدارة تجربتك الصحية في مكان واحد.</Text>
   {links.map(x=><Pressable key={x.screen} onPress={()=>navigation.navigate(x.screen as never)} style={{backgroundColor:'#FFFFFF',borderWidth:1,borderColor:'#E3ECEF',borderRadius:18,padding:16,marginVertical:6,flexDirection:'row',alignItems:'center',gap:12}}>
-   <View style={{width:46,height:46,borderRadius:15,backgroundColor:'#E8F6F4',alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:23,color:'#078B91'}}>{x.icon}</Text></View>
+   <View style={{width:46,height:46,borderRadius:15,backgroundColor:'#E8F6F4',alignItems:'center',justifyContent:'center'}}><TabGlyph name={x.icon} active={true}/></View>
    <View style={{flex:1}}><Text style={{fontSize:16,fontWeight:'800',color:'#142D42',textAlign:'right'}}>{x.title}</Text><Text style={{fontSize:12,color:'#718596',textAlign:'right',marginTop:4}}>{x.subtitle}</Text></View>
    <Text style={{fontSize:24,color:'#078B91'}}>‹</Text>
   </Pressable>)}

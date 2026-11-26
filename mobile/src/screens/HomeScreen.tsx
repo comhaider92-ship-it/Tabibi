@@ -1,5 +1,5 @@
 import React,{useEffect,useState} from 'react';
-import { Alert, Image, Linking, Pressable, Text, View } from 'react-native';
+import { Alert, Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { Screen } from '../components/Screen';
 import { Field, Loading, Body } from '../components/UI';
 import { api } from '../api/client';
@@ -8,6 +8,7 @@ const C={ink:'#15384D',muted:'#718596',teal:'#078B91',deep:'#087783',mint:'#E9F7
 const specialtyIcons:Record<string,string>={'طب الأطفال':'👶','أمراض النساء':'🌷','النساء والولادة':'🌷','القلب':'❤️','القلب والأوعية':'❤️','الباطنية':'🩺','الأسنان':'🦷','الجلدية':'✨','العيون':'👁️','العظام':'🦴','الأعصاب':'🧠','الأنف والأذن':'👂','طب الأسرة':'🏡'};
 const serviceTiles=[{title:'الأشعة',subtitle:'تصوير طبي',icon:'🩻',query:'أشعة'},{title:'الرنين المغناطيسي',subtitle:'MRI',icon:'🧲',query:'رنين مغناطيسي'},{title:'المفراس',subtitle:'CT scan',icon:'🖥️',query:'مفراس'},{title:'السونار',subtitle:'Ultrasound',icon:'🌊',query:'سونار'}];
 function Tile({icon,title,subtitle,onPress}:{icon:string;title:string;subtitle?:string;onPress:()=>void}){return <Pressable onPress={onPress} style={({pressed})=>({width:'48.2%',backgroundColor:C.white,borderWidth:1,borderColor:C.line,borderRadius:21,paddingVertical:15,paddingHorizontal:10,alignItems:'center',marginBottom:10,opacity:pressed?.82:1})}><View style={{width:54,height:54,borderRadius:18,backgroundColor:C.mint,alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:29}}>{icon}</Text></View><Text style={{fontSize:14,fontWeight:'900',color:C.ink,textAlign:'center',marginTop:9}}>{title}</Text>{!!subtitle&&<Text style={{fontSize:11,color:C.muted,marginTop:3}}>{subtitle}</Text>}</Pressable>}
+function SpecialtyChip({icon,title,onPress}:{icon:string;title:string;onPress:()=>void}){return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={({pressed})=>({width:112,minHeight:104,backgroundColor:C.white,borderWidth:1,borderColor:C.line,borderRadius:19,paddingVertical:11,paddingHorizontal:8,alignItems:'center',justifyContent:'center',marginLeft:8,opacity:pressed?.8:1})}><View style={{width:43,height:43,borderRadius:15,backgroundColor:C.mint,alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:24}}>{icon}</Text></View><Text numberOfLines={2} style={{fontSize:12,fontWeight:'900',color:C.ink,textAlign:'center',marginTop:8,lineHeight:18}}>{title}</Text></Pressable>}
 export function HomeScreen({onSearch,onBookings,onProfile,onHealthFile,onAdTarget}:{onSearch:(kind:'doctors'|'facilities',q:string)=>void;onBookings:()=>void;onProfile:()=>void;onHealthFile:()=>void;onAdTarget:(ad:any)=>void}){
  const [q,setQ]=useState('');const [cats,setCats]=useState<{doctors:{code:string;name:string}[];diagnostics:{code:string;name:string}[]}|null>(null);const [busy,setBusy]=useState(true);const [ad,setAd]=useState<any>(null);
  useEffect(()=>{api.categories().then(setCats).catch(e=>Alert.alert('تعذر تحميل الأقسام',e.message)).finally(()=>setBusy(false));api.publicAds('home').then(rows=>{const first=rows?.[0];if(first){setAd(first);api.recordAdImpression(first.id).catch(()=>{});}}).catch(()=>{});},[]);
@@ -35,7 +36,7 @@ export function HomeScreen({onSearch,onBookings,onProfile,onHealthFile,onAdTarge
    <Text style={{textAlign:'right',color:C.deep,fontWeight:'800',marginTop:7}}>اكتشف التفاصيل ←</Text>
   </Pressable>}
   <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:5,marginBottom:8}}><Text style={{fontSize:21,fontWeight:'900',color:C.ink}}>الاختصاصات الطبية</Text><Text style={{fontSize:11,color:C.muted}}>اختر الاختصاص</Text></View>
-  {busy?<Loading/>:<View style={{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between'}}>{cats?.doctors.map(x=><Tile key={x.code} icon={specialtyIcons[x.name]||'✚'} title={x.name} onPress={()=>search('doctors',x.name)}/>)}</View>}
+  {busy?<Loading/>:<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingVertical:2,paddingRight:2}}>{cats?.doctors.map(x=><SpecialtyChip key={x.code} icon={specialtyIcons[x.name]||'✚'} title={x.name} onPress={()=>search('doctors',x.name)}/>)}</ScrollView>}
   <Text style={{fontSize:21,fontWeight:'900',color:C.ink,textAlign:'right',marginTop:10,marginBottom:10}}>خدمات الفحوصات والتصوير</Text>
   <View style={{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between'}}>{serviceTiles.map(x=><Tile key={x.title} icon={x.icon} title={x.title} subtitle={x.subtitle} onPress={()=>search('facilities',x.query)}/>)}</View>
   <Text style={{fontSize:21,fontWeight:'900',color:C.ink,textAlign:'right',marginTop:8,marginBottom:10}}>المراكز والخدمات الأخرى</Text>

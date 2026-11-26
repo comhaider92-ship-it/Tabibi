@@ -39,7 +39,7 @@ function LiveApp(){
  React.useEffect(()=>{let alive=true;if(role){registerPushDevice().then(id=>{if(alive&&id)setPushDeviceId(id);}).catch(()=>{});}return()=>{alive=false;};},[role]);
  const logout=async()=>{if(pushDeviceId)await api.removePushDevice(pushDeviceId).catch(()=>{});setPushDeviceId(null);await setAccessToken(null);setRole(null);};
  if(!ready)return <View style={{flex:1,alignItems:'center',justifyContent:'center',backgroundColor:'#F6F8FB'}}><ActivityIndicator size="large" color="#087E8B"/><Text style={{marginTop:12,color:'#506176'}}>جارٍ تجهيز طبيبي...</Text></View>;
- return <NavigationContainer><Stack.Navigator screenOptions={{headerTitleAlign:'center',headerTintColor:'#087E8B'}}>
+ return <NavigationContainer key={role??'guest'}><Stack.Navigator screenOptions={{headerTitleAlign:'center',headerTintColor:'#087E8B'}}>
  {!role?<Stack.Screen name="Login" options={{title:'تسجيل الدخول'}}>{()=> <LoginScreen onLogin={setRole}/>}</Stack.Screen>:role==='doctor'?<>
   <Stack.Screen name="DoctorDashboard" options={({navigation}:any)=>({title:'لوحة الطبيب',headerRight:({tintColor}:any)=><HeaderActions logout={logout} color={tintColor||'#087E8B'}/>})}>{({navigation})=> <DoctorDashboardScreen onManageSchedule={()=>navigation.navigate('Schedule' as never)} onManageProfile={()=>navigation.navigate('DoctorProfile' as never)} onManageSubscription={()=>navigation.navigate('DoctorSubscription' as never)}/>}</Stack.Screen>
   <Stack.Screen name="AccountSecurity" options={{title:'أمان الحساب'}}>{()=> <AccountSecurityScreen onLogout={logout}/>}</Stack.Screen>

@@ -22,6 +22,19 @@ function assertApiConfiguration() {
   }
 }
 export const getApiBaseUrl = () => API_BASE_URL;
+export function resolveApiAssetUrl(path?: string | null): string | undefined {
+  if (!path) return undefined;
+  if (path.startsWith('https://') || path.startsWith('http://')) return path;
+  if (!API_BASE_URL) return undefined;
+  try {
+    const base = new URL(API_BASE_URL);
+    return path.startsWith('/')
+      ? new URL(path, base.origin).toString()
+      : new URL(path, API_BASE_URL + '/').toString();
+  } catch {
+    return undefined;
+  }
+}
 export async function uploadMedicalAttachment(fileName:string,mimeType:string,base64:string){
   assertApiConfiguration();
   if(!accessToken) throw new Error('انتهت جلسة الدخول. سجّل الدخول مجدداً.');

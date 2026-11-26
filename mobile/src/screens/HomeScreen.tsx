@@ -36,7 +36,7 @@ export function HomeScreen({onSearch,onBookings,onProfile,onHealthFile,onAdTarge
    <Text style={{textAlign:'right',color:C.deep,fontWeight:'800',marginTop:7}}>اكتشف التفاصيل ←</Text>
   </Pressable>}
   <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:5,marginBottom:8}}><Text style={{fontSize:21,fontWeight:'900',color:C.ink}}>الاختصاصات الطبية</Text><Text style={{fontSize:11,color:C.muted}}>اختر الاختصاص</Text></View>
-  {busy?<Loading/>:<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingVertical:2,paddingRight:2}}>{cats?.doctors.map(x=><SpecialtyChip key={x.code} icon={specialtyIcons[x.name]||'✚'} title={x.name} onPress={()=>search('doctors',x.name)}/>)}</ScrollView>}
+  {busy?<Loading/>:<ScrollView horizontal nestedScrollEnabled style={{direction:"rtl"}} showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingVertical:2,paddingRight:2,flexDirection:"row-reverse"}}>{cats?.doctors.map(x=><SpecialtyChip key={x.code} icon={specialtyIcons[x.name]||'✚'} title={x.name} onPress={()=>search('doctors',x.name)}/>)}</ScrollView>}
   <Text style={{fontSize:21,fontWeight:'900',color:C.ink,textAlign:'right',marginTop:10,marginBottom:10}}>خدمات الفحوصات والتصوير</Text>
   <View style={{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between'}}>{serviceTiles.map(x=><Tile key={x.title} icon={x.icon} title={x.title} subtitle={x.subtitle} onPress={()=>search('facilities',x.query)}/>)}</View>
   <Text style={{fontSize:21,fontWeight:'900',color:C.ink,textAlign:'right',marginTop:8,marginBottom:10}}>المراكز والخدمات الأخرى</Text>

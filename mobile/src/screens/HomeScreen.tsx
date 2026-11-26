@@ -2,7 +2,7 @@ import React,{useEffect,useState} from 'react';
 import { Alert, Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { Screen } from '../components/Screen';
 import { Field, Loading } from '../components/UI';
-import { api, getApiBaseUrl } from '../api/client';
+import { api, resolveApiAssetUrl } from '../api/client';
 
 const C={ink:'#15384D',muted:'#718596',teal:'#078B91',deep:'#087783',mint:'#E9F7F5',line:'#DCEBEA',white:'#FFFFFF'};
 const specialtyIcons:Record<string,string>={'طب الأطفال':'👶','أمراض النساء':'🌷','النساء والولادة':'🌷','القلب':'❤️','القلب والأوعية':'❤️','الباطنية':'🩺','الأسنان':'🦷','الجلدية':'✨','العيون':'👁️','العظام':'🦴','الأعصاب':'🧠','الأنف والأذن':'👂','طب الأسرة':'🏡'};
@@ -14,7 +14,7 @@ export function HomeScreen({onSearch,onBookings,onProfile,onHealthFile,onAdTarge
  useEffect(()=>{api.categories().then(setCats).catch(e=>Alert.alert('تعذر تحميل الأقسام',e.message)).finally(()=>setBusy(false));api.publicAds('home').then(rows=>{const first=rows?.[0];if(first){setAd(first);api.recordAdImpression(first.id).catch(()=>{});}}).catch(()=>{});},[]);
  const openAd=async()=>{if(!ad)return;try{await api.recordAdClick(ad.id);if(ad.targetType&&ad.targetType!=='none'&&ad.targetId){onAdTarget(ad);return;}if(ad.targetUrl)await Linking.openURL(ad.targetUrl);}catch{Alert.alert('تعذر فتح الإعلان','تحقق من اتصال الإنترنت أو رابط الإعلان.');}};
  const search=(kind:'doctors'|'facilities',text=q)=>{onSearch(kind,text.trim());setQ('');};
- const adImageBase=getApiBaseUrl();const adImageUri=ad?.imageUrl?((ad.imageUrl.startsWith('https://')||ad.imageUrl.startsWith('http://'))?ad.imageUrl:adImageBase?adImageBase+(ad.imageUrl.startsWith('/')?'':'/')+ad.imageUrl:undefined):undefined;
+ const adImageUri=resolveApiAssetUrl(ad?.imageUrl);
  return <Screen>
   <View style={{backgroundColor:'#E8F6F4',borderRadius:28,padding:20,marginBottom:14,borderWidth:1,borderColor:'#D4EBE7'}}>
    <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>

@@ -7,7 +7,7 @@ import { api } from '../api/client';
 const tile={backgroundColor:'#EAF5F6',borderColor:'#D5E9EA',borderWidth:1,borderRadius:14,padding:13,marginBottom:9};
 const ink='#172B4D',teal='#087E8B',muted='#506176';
 export function HomeScreen({onSearch,onBookings,onProfile,onHealthFile,onNotifications,onAdTarget}:{onSearch:(kind:'doctors'|'facilities',q:string)=>void;onBookings:()=>void;onProfile:()=>void;onHealthFile:()=>void;onNotifications:()=>void;onAdTarget:(ad:any)=>void}){
- const [q,setQ]=useState('');const [cats,setCats]=useState<{doctors:{code:string;name:string}[];diagnostics:{code:string;name:string}[]}|null>(null);const [busy,setBusy]=useState(true);const [ad,setAd]=useState<any>(null);
+ const [q,setQ]=useState('');const [moreOpen,setMoreOpen]=useState(false);const [cats,setCats]=useState<{doctors:{code:string;name:string}[];diagnostics:{code:string;name:string}[]}|null>(null);const [busy,setBusy]=useState(true);const [ad,setAd]=useState<any>(null);
  useEffect(()=>{api.categories().then(setCats).catch(e=>Alert.alert('تعذر تحميل الأقسام',e.message)).finally(()=>setBusy(false));api.publicAds('home').then(rows=>{const first=rows?.[0];if(first){setAd(first);api.recordAdImpression(first.id).catch(()=>{});}}).catch(()=>{});},[]);
  const search=(kind:'doctors'|'facilities',term=q)=>onSearch(kind,term.trim());
  const openAd=async()=>{if(!ad)return;try{await api.recordAdClick(ad.id);if(ad.targetType&&ad.targetType!=='none'&&ad.targetId){onAdTarget(ad);return;}if(ad.targetUrl)await Linking.openURL(ad.targetUrl);}catch{Alert.alert('تعذر فتح الإعلان','تحقق من اتصال الإنترنت أو رابط الإعلان.');}};

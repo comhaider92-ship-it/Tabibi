@@ -87,7 +87,7 @@ jobs:
           fi
       - name: Create complete source archive
         run: |
-          rm -f TABIBI_v109_FIXED.zip
+          rm -f /tmp/TABIBI_v109_FIXED.zip
           find . -type f \
             ! -path './.git/*' \
             ! -path '*/node_modules/*' \
@@ -95,13 +95,15 @@ jobs:
             ! -path './dist/*' \
             ! -path './mobile/dist/*' \
             ! -path './build/*' \
+            ! -path './private-uploads/*' \
             ! -name '*.zip' \
             ! -name '.env' \
-            -print0 | xargs -0 zip -q TABIBI_v109_FIXED.zip
+            -print | zip -q /tmp/TABIBI_v109_FIXED.zip -@
+          unzip -t /tmp/TABIBI_v109_FIXED.zip
       - uses: actions/upload-artifact@v4
         with:
           name: tabibi-v109-fixed
-          path: TABIBI_v109_FIXED.zip
+          path: /tmp/TABIBI_v109_FIXED.zip
           if-no-files-found: error
           retention-days: 30
 

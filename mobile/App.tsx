@@ -31,6 +31,19 @@ import {NotificationHeaderButton} from './src/components/NotificationHeaderButto
 import {api,restoreAccessToken,setAccessToken} from './src/api/client';
 import {registerPushDevice} from './src/notifications/registerPush';
 const Stack=createNativeStackNavigator();
+const patientTabs=[{key:'Home',label:'الرئيسية',icon:'⌂'},{key:'Bookings',label:'المواعيد',icon:'▦'},{key:'Notifications',label:'الإشعارات',icon:'♧'},{key:'PatientProfile',label:'حسابي',icon:'♙'},{key:'PatientHealthFile',label:'المزيد',icon:'•••'}];
+function PatientTabBar({navigation,active}:{navigation:any;active:string}){
+ return <View style={{flexDirection:'row',backgroundColor:'#FFFFFF',borderTopWidth:1,borderTopColor:'#DCEBEA',paddingTop:8,paddingBottom:7,paddingHorizontal:5}}>
+  {patientTabs.map(tab=><Pressable key={tab.key} onPress={()=>navigation.navigate(tab.key as never)} style={{flex:1,alignItems:'center',justifyContent:'center',paddingVertical:3}}>
+   <Text style={{fontSize:22,color:active===tab.key?'#078B91':'#8293A1',fontWeight:'900'}}>{tab.icon}</Text>
+   <Text style={{fontSize:10,fontWeight:active===tab.key?'900':'600',color:active===tab.key?'#078B91':'#718596',marginTop:2}}>{tab.label}</Text>
+   {active===tab.key&&<View style={{height:3,width:18,backgroundColor:'#078B91',borderRadius:3,marginTop:3}}/>}
+  </Pressable>)}
+ </View>;
+}
+function PatientTabScreen({children,navigation,active}:{children:any;navigation:any;active:string}){
+ return <View style={{flex:1,backgroundColor:'#F7FAFC'}}><View style={{flex:1}}>{children}</View><PatientTabBar navigation={navigation} active={active}/></View>;
+}
 function LiveApp(){
  const [role,setRole]=useState<string|null>(null);const [ready,setReady]=useState(false);const [pushDeviceId,setPushDeviceId]=useState<string|null>(null);const [kind,setKind]=useState<'doctors'|'facilities'>('doctors');const [query,setQuery]=useState('');const [selected,setSelected]=useState<any>(null);
  React.useEffect(()=>{let alive=true;(async()=>{try{const token=await restoreAccessToken();if(token){const user=await api.me();if(alive&&['patient','doctor','owner'].includes(user.role))setRole(user.role);else await setAccessToken(null);}}catch{await setAccessToken(null);}finally{if(alive)setReady(true);}})();return()=>{alive=false;};},[]);
@@ -61,14 +74,14 @@ function LiveApp(){
   <Stack.Screen name="OwnerReview" component={OwnerReviewScreen} options={{title:'مراجعة الطلبات'}}/>
   <Stack.Screen name="Schedule" options={{title:'إدارة الدوام والمواعيد'}}>{()=> <ScheduleManagementScreen role="owner"/>}</Stack.Screen>
  </>:<>
-  <Stack.Screen name="Home" options={{title:'طبيبي',headerRight:({tintColor,navigation}:any)=> <View style={{flexDirection:'row',alignItems:'center',gap:14}}><NotificationHeaderButton navigation={navigation} color={tintColor||'#087E8B'}/><Pressable onPress={logout}><Text style={{color:tintColor||'#087E8B',fontWeight:'700'}}>خروج</Text></Pressable></View>}}>{({navigation})=><HomeScreen onSearch={(k,q)=>{setKind(k);setQuery(q);navigation.navigate('Search' as never);}} onBookings={()=>navigation.navigate('Bookings' as never)} onProfile={()=>navigation.navigate('PatientProfile' as never)} onHealthFile={()=>navigation.navigate('PatientHealthFile' as never)} onAdTarget={ad=>{setKind(ad.targetType==='doctor'?'doctors':'facilities');api.publicAdTarget(ad.targetType,ad.targetId).then((x:any)=>{setSelected(x);navigation.navigate('Detail' as never);}).catch(()=>{});}}/>}</Stack.Screen>
-  <Stack.Screen name="Notifications" options={{title:'الإشعارات'}}>{({navigation})=><NotificationsScreen role="patient" onOpenRelated={()=>navigation.navigate('Bookings' as never)}/>}</Stack.Screen>
+  <Stack.Screen name="Home" options={{title:'طبيبي',headerRight:({tintColor,navigation}:any)=> <View style={{flexDirection:'row',alignItems:'center',gap:14}}><NotificationHeaderButton navigation={navigation} color={tintColor||'#087E8B'}/><Pressable onPress={logout}><Text style={{color:tintColor||'#087E8B',fontWeight:'700'}}>خروج</Text></Pressable></View>}}>{({navigation})=><PatientTabScreen navigation={navigation} active="Home"><HomeScreen onSearch={(k,q)=>{setKind(k);setQuery(q);navigation.navigate('Search' as never);}} onBookings={()=>navigation.navigate('Bookings' as never)} onProfile={()=>navigation.navigate('PatientProfile' as never)} onHealthFile={()=>navigation.navigate('PatientHealthFile' as never)} onAdTarget={ad=>{setKind(ad.targetType==='doctor'?'doctors':'facilities');api.publicAdTarget(ad.targetType,ad.targetId).then((x:any)=>{setSelected(x);navigation.navigate('Detail' as never);}).catch(()=>{});}}/></PatientTabScreen>}</Stack.Screen>
+  <Stack.Screen name="Notifications" options={{title:'الإشعارات'}}>{({navigation})=><PatientTabScreen navigation={navigation} active="Notifications"><NotificationsScreen role="patient" onOpenRelated={()=>navigation.navigate('Bookings' as never)}/></PatientTabScreen>}</Stack.Screen>
   <Stack.Screen name="Search" options={{title:'البحث'}}>{({navigation})=><SearchScreen kind={kind} initial={query} onSelect={x=>{setSelected(x);navigation.navigate('Detail' as never);}} onAdTarget={ad=>{setKind(ad.targetType==='doctor'?'doctors':'facilities');api.publicAdTarget(ad.targetType,ad.targetId).then((x:any)=>{setSelected(x);navigation.navigate('Detail' as never);}).catch(()=>{});}}/>}</Stack.Screen>
   <Stack.Screen name="Detail" options={{title:'التفاصيل'}}>{({navigation})=><DetailScreen item={selected} kind={kind} onBook={()=>navigation.navigate('Booking' as never)}/>}</Stack.Screen>
   <Stack.Screen name="Booking" options={{title:'الحجز'}}>{({navigation})=><BookingScreen item={selected} kind={kind} onDone={()=>navigation.navigate('Bookings' as never)}/>}</Stack.Screen>
-  <Stack.Screen name="Bookings" options={{title:'حجوزاتي'}}>{()=> <BookingsScreen/>}</Stack.Screen>
-  <Stack.Screen name="PatientHealthFile" component={PatientHealthFileScreen} options={{title:'ملفي الصحي'}}/>
-  <Stack.Screen name="PatientProfile" options={{title:'ملفي الشخصي'}}>{()=> <PatientProfileScreen onLogout={logout}/>}</Stack.Screen>
+  <Stack.Screen name="Bookings" options={{title:'حجوزاتي'}}>{({navigation})=><PatientTabScreen navigation={navigation} active="Bookings"><BookingsScreen/></PatientTabScreen>}</Stack.Screen>
+  <Stack.Screen name="PatientHealthFile" options={{title:'المزيد'}}>{({navigation})=><PatientTabScreen navigation={navigation} active="PatientHealthFile"><PatientHealthFileScreen/></PatientTabScreen>}</Stack.Screen>
+  <Stack.Screen name="PatientProfile" options={{title:'ملفي الشخصي'}}>{({navigation})=><PatientTabScreen navigation={navigation} active="PatientProfile"><PatientProfileScreen onLogout={logout}/></PatientTabScreen>}</Stack.Screen>
  </>}
  </Stack.Navigator></NavigationContainer>;
 }

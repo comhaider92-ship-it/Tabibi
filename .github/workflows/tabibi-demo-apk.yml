@@ -1,0 +1,71 @@
+name: Tabibi Android demo APK
+
+on:
+  push:
+    branches:
+      - tabibi-home-improvements-2026-11
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/tabibi-demo-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-demo-apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Type-check the actual mobile app
+        run: npm run typecheck
+      - name: Generate offline demo Android project
+        run: npx expo prebuild --platform android --clean
+        env:
+          EXPO_PUBLIC_DEMO_MODE: '1'
+      - name: Align Kotlin and Compose compiler
+        run: |
+          if grep -q '^android.kotlinVersion=' android/gradle.properties; then
+            sed -i 's/^android.kotlinVersion=.*/android.kotlinVersion=1.9.24/' android/gradle.properties
+          else
+            echo 'android.kotlinVersion=1.9.24' >> android/gradle.properties
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("node_modules/expo-modules-core/android/build.gradle")
+          s = p.read_text()
+          if '"1.9.24": "1.5.14"' not in s:
+              raise SystemExit("Expo Kotlin/Compose compatibility mapping not found")
+          print("Kotlin 1.9.24 / Compose Compiler 1.5.14 mapping verified")
+          PY
+      - name: Build installable demo APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          EXPO_PUBLIC_DEMO_MODE=1 ./gradlew assembleRelease
+      - name: Upload APK for phone installation
+        uses: actions/upload-artifact@v4
+        with:
+          name: TABIBI_DEMO_APK
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30

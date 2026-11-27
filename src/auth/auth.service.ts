@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { UserRole } from '../users/user.entity';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterFacilityManagerDto } from './dto/register-facility-manager.dto';
 @Injectable()
 export class AuthService implements OnModuleInit {
  constructor(private readonly users:UsersService,private readonly jwt:JwtService,private readonly config:ConfigService,@InjectRepository(LoginSecurityEvent) private readonly securityEvents:Repository<LoginSecurityEvent>,@InjectRepository(AuthSession) private readonly sessions:Repository<AuthSession>){}
@@ -37,6 +38,17 @@ export class AuthService implements OnModuleInit {
   });
   return {id:user.id,displayName:user.displayName,role:user.role,isVerified:user.isVerified,
    message:'تم إنشاء الحساب. يلزم توثيق رقم الهاتف أو البريد قبل تفعيل جميع الخدمات.'};
+ }
+ async registerFacilityManager(dto:RegisterFacilityManagerDto){
+  if(!dto.email && !dto.phone) throw new ConflictException('أدخل البريد الإلكتروني أو رقم الهاتف على الأقل');
+  if(dto.email && await this.users.findByIdentifier(dto.email)) throw new ConflictException('البريد أو الهاتف مستخدم مسبقاً');
+  if(dto.phone && await this.users.findByIdentifier(dto.phone)) throw new ConflictException('رقم الهاتف مستخدم مسبقاً');
+  const user=await this.users.create({
+   displayName:dto.displayName,email:dto.email?.trim().toLowerCase()??null,phone:dto.phone?.trim()??null,
+   passwordHash:await bcrypt.hash(dto.password,12),role:UserRole.FACILITY_MANAGER,isVerified:false,isActive:false
+  });
+  return {id:user.id,displayName:user.displayName,role:user.role,isActive:user.isActive,
+   message:'تم استلام طلب حساب إدارة المنشأة. لن تتمكن من تسجيل الدخول أو إدارة أي منشأة قبل موافقة إدارة طبيبي.'};
  }
  async login(identifier:string,password:string,ipAddress:string='unknown',userAgent:string|null=null){
   const normalized=identifier.trim().toLowerCase();

@@ -22,6 +22,8 @@ import { ScheduleException } from '../scheduling/schedule-exception.entity';
 import { CreateScheduleExceptionDto } from '../scheduling/dto/create-schedule-exception.dto';
 import { SaveWeeklyScheduleDto, GenerateFacilitySlotsDto } from '../scheduling/dto/weekly-schedule.dto';
 import { dateWeekday, minuteOfDay, validateWeeklyRules, zonedLocalToUtc, zonedDateTimeParts } from '../scheduling/weekly-schedule.utils';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/user.entity';
 
 function baghdadDayStart(value: Date): Date {
  const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(value);
@@ -41,10 +43,12 @@ export class FacilitiesService {
   @InjectRepository(WeeklyScheduleRule) private readonly weeklyRules:Repository<WeeklyScheduleRule>,
   @InjectRepository(ScheduleException) private readonly exceptions:Repository<ScheduleException>,
   @InjectRepository(OwnerAuditLog) private readonly auditLogs:Repository<OwnerAuditLog>,
+  private readonly users:UsersService,
  ) {}
  async pendingFacilities() { return this.facilities.find({where:{status:FacilityStatus.PENDING},order:{createdAt:'ASC'}}); }
  async myFacilities(ownerId:string) {
-  return this.facilities.find({where:{ownerUserId:ownerId},order:{createdAt:'DESC'}});
+  const actor=await this.users.findById(ownerId);
+  return this.facilities.find({where:actor?.role===UserRole.OWNER?{}:{ownerUserId:ownerId},order:{createdAt:'DESC'}});
  }
  async directory(filters:FacilityDirectoryQueryDto) {
   const qb=this.facilities.createQueryBuilder('f').select(['f.id','f.name','f.facilityType','f.city','f.address','f.phone','f.description','f.imageUrl','f.createdAt','f.updatedAt'])
@@ -321,7 +325,8 @@ export class FacilitiesService {
  private async ownedFacility(ownerId:string,facilityId:string) {
   const facility=await this.facilities.findOne({where:{id:facilityId}});
   if(!facility) throw new NotFoundException('المركز غير موجود');
-  if(facility.ownerUserId!==ownerId) throw new ForbiddenException('لا تملك صلاحية إدارة هذا المركز');
+  const actor=await this.users.findById(ownerId);
+  if(facility.ownerUserId!==ownerId && actor?.role!==UserRole.OWNER) throw new ForbiddenException('لا تملك صلاحية إدارة هذا المركز');
   return facility;
  }
 }

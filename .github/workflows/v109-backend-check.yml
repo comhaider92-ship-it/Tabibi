@@ -25,3 +25,4 @@ jobs:
           for version in 100 101 102 103 104 105 106 107 108; do
             python scripts_verify_v${version}.py
           done
+          python scripts_verify_v109_facility_managers.py

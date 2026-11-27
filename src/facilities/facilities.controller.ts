@@ -66,7 +66,7 @@ export class FacilitiesController {
  @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.PATIENT)
  cancelBooking(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string){return this.facilities.cancelPatientBooking(u.sub,id);}
  @Patch('owner/:id/review')
- @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
+ @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
  review(@Param('id',new ParseUUIDPipe()) id:string,@CurrentUser() u:{sub:string},@Body() dto:ReviewFacilityDto){return this.facilities.reviewFacility(id,dto.status,u.sub);}
  @Post('bookings')
  @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.PATIENT)

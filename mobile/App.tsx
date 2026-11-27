@@ -26,6 +26,7 @@ import {OwnerUsersScreen} from './src/screens/OwnerUsersScreen';
 import {OwnerFacilitiesScreen} from './src/screens/OwnerFacilitiesScreen';
 import {OwnerAuditScreen} from './src/screens/OwnerAuditScreen';
 import {OwnerMessageReportsScreen} from './src/screens/OwnerMessageReportsScreen';
+import {FacilityManagerDashboardScreen} from './src/screens/FacilityManagerDashboardScreen';
 import {NotificationsScreen} from './src/screens/NotificationsScreen';
 import {NotificationHeaderButton} from './src/components/NotificationHeaderButton';
 import {api,restoreAccessToken,setAccessToken} from './src/api/client';
@@ -33,7 +34,7 @@ import {registerPushDevice} from './src/notifications/registerPush';
 const Stack=createNativeStackNavigator();
 function LiveApp(){
  const [role,setRole]=useState<string|null>(null);const [ready,setReady]=useState(false);const [pushDeviceId,setPushDeviceId]=useState<string|null>(null);const [kind,setKind]=useState<'doctors'|'facilities'>('doctors');const [query,setQuery]=useState('');const [selected,setSelected]=useState<any>(null);
- React.useEffect(()=>{let alive=true;(async()=>{try{const token=await restoreAccessToken();if(token){const user=await api.me();if(alive&&['patient','doctor','owner'].includes(user.role))setRole(user.role);else await setAccessToken(null);}}catch{await setAccessToken(null);}finally{if(alive)setReady(true);}})();return()=>{alive=false;};},[]);
+ React.useEffect(()=>{let alive=true;(async()=>{try{const token=await restoreAccessToken();if(token){const user=await api.me();if(alive&&['patient','doctor','owner','facility_manager'].includes(user.role))setRole(user.role);else await setAccessToken(null);}}catch{await setAccessToken(null);}finally{if(alive)setReady(true);}})();return()=>{alive=false;};},[]);
  React.useEffect(()=>{let alive=true;if(role){registerPushDevice().then(id=>{if(alive&&id)setPushDeviceId(id);}).catch(()=>{});}return()=>{alive=false;};},[role]);
  const logout=async()=>{if(pushDeviceId)await api.removePushDevice(pushDeviceId).catch(()=>{});setPushDeviceId(null);await setAccessToken(null);setRole(null);};
  if(!ready)return <View style={{flex:1,alignItems:'center',justifyContent:'center',backgroundColor:'#F6F8FB'}}><ActivityIndicator size="large" color="#087E8B"/><Text style={{marginTop:12,color:'#506176'}}>جارٍ تجهيز طبيبي...</Text></View>;
@@ -60,6 +61,14 @@ function LiveApp(){
   <Stack.Screen name="FacilityServices" component={FacilityServicesScreen} options={{title:'إدارة الخدمات'}}/>
   <Stack.Screen name="OwnerReview" component={OwnerReviewScreen} options={{title:'مراجعة الطلبات'}}/>
   <Stack.Screen name="Schedule" options={{title:'إدارة الدوام والمواعيد'}}>{()=> <ScheduleManagementScreen role="owner"/>}</Stack.Screen>
+ </>:role==='facility_manager'?<>
+  <Stack.Screen name="FacilityManagerDashboard" options={{title:'إدارة منشأتي',headerRight:({tintColor,navigation}:any)=> <View style={{flexDirection:'row',alignItems:'center',gap:14}}><NotificationHeaderButton navigation={navigation} color={tintColor||'#087E8B'}/><Pressable onPress={()=>navigation.navigate('AccountSecurity' as never)}><Text style={{color:tintColor||'#087E8B',fontWeight:'700'}}>الأمان</Text></Pressable><Pressable onPress={logout}><Text style={{color:tintColor||'#087E8B',fontWeight:'700'}}>خروج</Text></Pressable></View>}}>{({navigation})=><FacilityManagerDashboardScreen onManageFacilities={()=>navigation.navigate('ManagerFacilities' as never)} onCreateFacility={()=>navigation.navigate('ManagerFacilityCreate' as never)} onManageServices={()=>navigation.navigate('ManagerServices' as never)} onManageSchedule={()=>navigation.navigate('ManagerSchedule' as never)}/>}</Stack.Screen>
+  <Stack.Screen name="AccountSecurity" options={{title:'أمان الحساب'}}>{()=> <AccountSecurityScreen onLogout={logout}/>}</Stack.Screen>
+  <Stack.Screen name="Notifications" options={{title:'الإشعارات'}}>{({navigation})=><NotificationsScreen role="facility_manager" onOpenRelated={()=>navigation.navigate('FacilityManagerDashboard' as never)}/>}</Stack.Screen>
+  <Stack.Screen name="ManagerFacilities" component={OwnerFacilitiesScreen} options={{title:'بيانات منشأتي'}}/>
+  <Stack.Screen name="ManagerFacilityCreate" options={{title:'تسجيل منشأة جديدة'}}>{({navigation})=><OwnerFacilityCreateScreen onCreated={()=>navigation.navigate('FacilityManagerDashboard' as never)}/>}</Stack.Screen>
+  <Stack.Screen name="ManagerServices" component={FacilityServicesScreen} options={{title:'إدارة الأقسام والخدمات'}}/>
+  <Stack.Screen name="ManagerSchedule" options={{title:'إدارة الدوام والمواعيد'}}>{()=> <ScheduleManagementScreen role="owner"/>}</Stack.Screen>
  </>:<>
   <Stack.Screen name="Home" options={{title:'طبيبي',headerRight:({tintColor,navigation}:any)=> <View style={{flexDirection:'row',alignItems:'center',gap:14}}><NotificationHeaderButton navigation={navigation} color={tintColor||'#087E8B'}/><Pressable onPress={logout}><Text style={{color:tintColor||'#087E8B',fontWeight:'700'}}>خروج</Text></Pressable></View>}}>{({navigation})=><HomeScreen onSearch={(k,q)=>{setKind(k);setQuery(q);navigation.navigate('Search' as never);}} onBookings={()=>navigation.navigate('Bookings' as never)} onProfile={()=>navigation.navigate('PatientProfile' as never)} onHealthFile={()=>navigation.navigate('PatientHealthFile' as never)} onAdTarget={ad=>{setKind(ad.targetType==='doctor'?'doctors':'facilities');api.publicAdTarget(ad.targetType,ad.targetId).then((x:any)=>{setSelected(x);navigation.navigate('Detail' as never);}).catch(()=>{});}}/>}</Stack.Screen>
   <Stack.Screen name="Notifications" options={{title:'الإشعارات'}}>{({navigation})=><NotificationsScreen role="patient" onOpenRelated={()=>navigation.navigate('Bookings' as never)}/>}</Stack.Screen>

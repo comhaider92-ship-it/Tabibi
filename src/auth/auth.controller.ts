@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, UseGuards, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, Req, Param, ParseUUIDPipe } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { OtpService } from './otp.service';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterFacilityManagerDto } from './dto/register-facility-manager.dto';
 import { LoginDto } from './dto/login.dto';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { ConfirmOtpDto } from './dto/confirm-otp.dto';
@@ -24,6 +25,15 @@ export class AuthController {
  constructor(private readonly auth:AuthService,private readonly otp:OtpService,private readonly users:UsersService){}
  @Post('register') register(@Body() dto:RegisterDto){return this.auth.register(dto);}
  @Post('login') login(@Body() dto:LoginDto,@Req() req:Request){return this.auth.login(dto.identifier,dto.password,req.ip||'unknown',String(req.headers['user-agent']||''));}
+ @Post('facility-manager/register') registerFacilityManager(@Body() dto:RegisterFacilityManagerDto){return this.auth.registerFacilityManager(dto);}
+ @Get('owner/facility-managers/pending') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ pendingFacilityManagers(){return this.users.listPendingFacilityManagers();}
+ @Patch('owner/facility-managers/:id/approve') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ async approveFacilityManager(@Param('id',new ParseUUIDPipe()) id:string){
+  const user=await this.users.approveFacilityManager(id);
+  if(!user) throw new UnauthorizedException('طلب مدير المنشأة غير موجود أو تمت معالجته.');
+  return {id:user.id,displayName:user.displayName,role:user.role,isActive:user.isActive,isVerified:user.isVerified,message:'تم اعتماد حساب مدير المنشأة. يمكنه تسجيل الدخول الآن.'};
+ }
  @Get('owner/security/login-events') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
  recentLoginSecurityEvents(){return this.auth.recentLoginSecurityEvents();}
  @Get('me/sessions') @UseGuards(JwtAuthGuard)

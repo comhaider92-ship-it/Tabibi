@@ -10,6 +10,7 @@ import { MedicalFacility } from '../facilities/facility.entity';
 import { FacilityBooking, FacilityBookingStatus } from '../facilities/facility-booking.entity';
 import { FacilityAvailabilitySlot, FacilitySlotStatus } from '../facilities/facility-slot.entity';
 import { FacilityService } from '../facilities/facility-service.entity';
+import { UserRole } from '../users/user.entity';
 
 @Injectable()
 export class DashboardService {
@@ -58,9 +59,9 @@ export class DashboardService {
   }
 
 
-  async facility(ownerId: string, facilityId: string, from?: string, to?: string) {
-    const facility = await this.facilities.findOne({ where: { id: facilityId, ownerUserId: ownerId } });
-    if (!facility) throw new NotFoundException('المركز غير موجود أو لا تملك صلاحية إدارته');
+  async facility(ownerId: string, facilityId: string, actorRole: UserRole, from?: string, to?: string) {
+    const facility = await this.facilities.findOne({ where: { id: facilityId } });
+    if (!facility || (actorRole !== UserRole.OWNER && facility.ownerUserId !== ownerId)) throw new NotFoundException('المركز غير موجود أو لا تملك صلاحية إدارته');
     const { start, end } = this.range(from, to);
     const base = () => this.facilityBookings.createQueryBuilder('b').where('b."facilityId"=:facilityId', { facilityId }).andWhere('b."startsAt">=:start AND b."startsAt"<:end', { start, end });
     const [requested, confirmed, cancelled, completed, rejected, upcoming, availableSlots, closedSlots, activeExceptions, services] = await Promise.all([

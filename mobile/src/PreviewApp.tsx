@@ -5,7 +5,7 @@ import {PatientExperience} from './PatientExperience';
 import {Action,Body,Field,Heading,Item,Panel,Pill} from './components/UI';
 
 type Role='patient'|'doctor'|'owner';
-const C={ink:'#142D42',muted:'#708294',teal:'#087E8B',mint:'#E8F6F4',navy:'#15384D',gold:'#F4B860',line:'#E5EDF1'};
+const C={ink:'#1F352E',muted:'#74837A',teal:'#176B50',mint:'#E8F1E9',navy:'#123D31',gold:'#D8AE65',line:'#E3E9E1'};
 const specialties=[{name:'طب الأطفال',icon:'🧸'},{name:'أمراض النساء',icon:'🌷'},{name:'القلب',icon:'❤️'},{name:'الباطنية',icon:'🩺'},{name:'الأسنان',icon:'🦷'},{name:'الجلدية',icon:'✨'},{name:'العظام',icon:'🦴'},{name:'العيون',icon:'👁️'},{name:'الأنف والأذن والحنجرة',icon:'👂'},{name:'الأعصاب',icon:'🧠'},{name:'الجراحة',icon:'⚕️'},{name:'طب الأسرة',icon:'🏡'},{name:'المسالك البولية',icon:'💧'},{name:'الطب النفسي',icon:'🧠'},{name:'الأورام',icon:'🎗️'},{name:'الغدد الصماء',icon:'🧬'},{name:'الكلى',icon:'🫘'},{name:'الروماتيزم',icon:'🦴'},{name:'التغذية',icon:'🥗'}];
 const doctors=[{name:'د. أحمد علي',spec:'طب الأطفال',city:'البصرة',clinic:'عيادة الأمل',days:'الأحد والثلاثاء والخميس',icon:'🧸'},{name:'د. زهراء كريم',spec:'أمراض النساء',city:'البصرة',clinic:'مركز الحياة الطبي',days:'السبت والاثنين والأربعاء',icon:'🌷'},{name:'د. مصطفى حسن',spec:'الباطنية والقلب',city:'بغداد',clinic:'مستشفى الشفاء',days:'الأحد والثلاثاء',icon:'❤️'}];
 const facilities=[{name:'مختبر النور',spec:'تحاليل مختبرية',city:'البصرة',clinic:'العشار',icon:'🧪',type:'مختبرات'},{name:'مركز الحياة للأشعة',spec:'سونار وأشعة',city:'البصرة',clinic:'البراضعية',icon:'🩻',type:'أشعة'},{name:'مركز التصوير الطبي',spec:'رنين مغناطيسي',city:'البصرة',clinic:'القبلة',icon:'🧲',type:'رنين'},{name:'مركز الفحص التشخيصي',spec:'تصوير طبقي',city:'بغداد',clinic:'الكرادة',icon:'🩻',type:'طبقي'}];

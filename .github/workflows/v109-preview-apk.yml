@@ -32,14 +32,16 @@ jobs:
           EXPO_PUBLIC_DEMO_MODE: '1'
       - name: Align Kotlin with Compose compiler
         run: |
-          # Expo SDK 52 pins Kotlin through android.kotlinVersion in gradle.properties.
+          # SDK 52's generated Gradle files may pin Kotlin independently of gradle.properties.
           if grep -q '^android.kotlinVersion=' android/gradle.properties; then
             sed -i 's/^android.kotlinVersion=.*/android.kotlinVersion=1.9.25/' android/gradle.properties
           else
             echo 'android.kotlinVersion=1.9.25' >> android/gradle.properties
           fi
-          grep -n '^android.kotlinVersion=' android/gradle.properties
-          grep -n 'kotlinVersion' android/build.gradle
+          # Override any generated 1.9.24 Kotlin plugin declaration.
+          sed -i 's/1.9.24/1.9.25/g' android/build.gradle android/settings.gradle 2>/dev/null || true
+          echo '--- Kotlin configuration ---'
+          grep -nE 'kotlinVersion|1\.9\.(24|25)' android/build.gradle android/settings.gradle android/gradle.properties || true
       - name: Build APK
         run: |
           chmod +x android/gradlew

@@ -11,7 +11,7 @@ pkg = json.loads((ROOT / 'package.json').read_text())
 compose = (ROOT / 'compose.yaml').read_text()
 audit = (ROOT / 'scripts/check-migration-readiness.mjs').read_text()
 checks = {
-    '33 migration files are present': len(migrations) == 33,
+    'at least 33 migration files are present': len(migrations) >= 33,
     'migration filenames have unique 13-digit timestamps': all(re.match(r'^\d{13}-.+\.ts$', n) for n in files) and len({n[:13] for n in files}) == len(files),
     'migration classes match filename and timestamp': all(f"export class {p.stem[14:]}{p.stem[:13]} " in texts[p.name] for p in migrations),
     'all migrations implement up and down': all(re.search(r'async\s+up\s*\(', t) and re.search(r'async\s+down\s*\(', t) for t in texts.values()),

@@ -30,17 +30,24 @@ jobs:
         run: npx expo prebuild --platform android --clean
         env:
           EXPO_PUBLIC_DEMO_MODE: '1'
-      - name: Align Kotlin compiler across generated and Expo Gradle files
+      - name: Verify Expo Kotlin and Compose compiler compatibility
         run: |
-          sed -i 's/1.9.24/1.9.25/g' android/build.gradle android/settings.gradle android/gradle.properties 2>/dev/null || true
-          # Expo Modules Core can declare its own Kotlin plugin version under node_modules.
-          grep -RIl --include='*.gradle' --include='*.gradle.kts' '1.9.24' node_modules/expo-modules-core node_modules/expo-modules-autolinking 2>/dev/null | while read file; do
-            sed -i 's/1.9.24/1.9.25/g' "$file"
-          done
-          echo '--- Remaining Kotlin 1.9.24 declarations in relevant Gradle files ---'
-          grep -RIn --include='*.gradle' --include='*.gradle.kts' '1.9.24' android node_modules/expo-modules-core node_modules/expo-modules-autolinking 2>/dev/null || true
-          echo '--- Selected Kotlin version ---'
-          grep -nE 'kotlinVersion|android.kotlinVersion' android/build.gradle android/gradle.properties || true
+          # Expo SDK 52 expo-modules-core requires Kotlin 1.9.24 with Compose Compiler 1.5.14.
+          if grep -q '^android.kotlinVersion=' android/gradle.properties; then
+            sed -i 's/^android.kotlinVersion=.*/android.kotlinVersion=1.9.24/' android/gradle.properties
+          else
+            echo 'android.kotlinVersion=1.9.24' >> android/gradle.properties
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("node_modules/expo-modules-core/android/build.gradle")
+          s = p.read_text()
+          if '"1.9.24": "1.5.14"' not in s:
+              raise SystemExit("Expected Expo Kotlin 1.9.24 / Compose Compiler 1.5.14 mapping was not found")
+          print("Verified compatible Kotlin 1.9.24 / Compose Compiler 1.5.14 mapping")
+          PY
+          echo 'Selected Android Kotlin version:'
+          grep '^android.kotlinVersion=' android/gradle.properties
       - name: Build APK
         run: |
           chmod +x android/gradlew

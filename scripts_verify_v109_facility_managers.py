@@ -21,6 +21,7 @@ checks = {
     'approval activates only a pending facility manager': "role:UserRole.FACILITY_MANAGER,isActive:false" in users and "user.isActive=true;user.isVerified=true" in users,
     'facility manager can register a facility but it remains pending': "@Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)" in facilities_controller and "status:FacilityStatus.PENDING" in facilities_service,
     'manager ownership is checked against the requested facility': "if(facility.ownerUserId!==ownerId) throw new ForbiddenException" in facilities_service,
+    'facility managers may upload only facility images and documents for facilities they own': "[UserRole.OWNER, UserRole.FACILITY_MANAGER]" in read('src/uploads/uploads.service.ts') and "ownerUserId: actor.sub" in read('src/uploads/uploads.service.ts'),
     'facility review remains owner-only': "@Patch('owner/:id/review')\\n @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)" in facilities_controller,
     'pending facility review queue remains owner-only': "@Get('owner/pending') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)" in facilities_controller,
     'facility dashboard is role-guarded and scoped to the manager-owned facility': "@Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)" in dashboard_controller and 'ownerUserId: ownerId' in dashboard_service,

@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-export type Role = 'patient' | 'doctor' | 'owner';
+export type Role = 'patient' | 'doctor' | 'owner' | 'facility_manager';
 export type ApiError = { message?: string | string[] };
 
 // Deliberately has no localhost fallback: a release APK on a phone cannot reach
@@ -83,6 +83,9 @@ export const api = {
   requestContactChange: (contactType:'phone'|'email',value:string) => request<{message:string;expiresInSeconds:number}>('/auth/me/contact-change/request',{method:'POST',body:JSON.stringify({contactType,value})}),
   confirmContactChange: (contactType:'phone'|'email',value:string,code:string) => request<{message:string}>('/auth/me/contact-change/confirm',{method:'POST',body:JSON.stringify({contactType,value,code})}),
   register: (data: {displayName:string; phone?:string; email?:string; password:string; role:'patient'}) => request<{id:string;displayName:string;role:Role;isVerified:boolean;message:string}>('/auth/register', {method:'POST',body:JSON.stringify(data)}),
+  registerFacilityManager: (data:{displayName:string;phone?:string;email?:string;password:string}) => request<{id:string;displayName:string;role:Role;isActive:boolean;message:string}>('/auth/facility-manager/register',{method:'POST',body:JSON.stringify(data)}),
+  pendingFacilityManagers: () => request<any[]>('/auth/owner/facility-managers/pending'),
+  approveFacilityManager: (id:string) => request<any>(`/auth/owner/facility-managers/${encodeURIComponent(id)}/approve`,{method:'PATCH'}),
   requestOtp: (identifier:string, purpose:'verify_account'|'reset_password') => request<{message:string;expiresInSeconds?:number}>('/auth/otp/request',{method:'POST',body:JSON.stringify({identifier,purpose})}),
   confirmOtp: (identifier:string, purpose:'verify_account'|'reset_password', code:string, newPassword?:string) => request<{message:string}>('/auth/otp/confirm',{method:'POST',body:JSON.stringify({identifier,purpose,code,newPassword})}),
   categories: () => request<{doctors:{code:string;name:string}[];diagnostics:{code:string;name:string}[]}>('/medical-directory/categories'),

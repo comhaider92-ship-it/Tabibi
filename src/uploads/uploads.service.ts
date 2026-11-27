@@ -52,11 +52,11 @@ export class UploadsService {
     if (!category || !allowedCategories.includes(category)) throw new BadRequestException('فئة الملف غير صحيحة.');
     if (actor.role === UserRole.PATIENT && category !== UploadCategory.MEDICAL_ATTACHMENT) throw new ForbiddenException('المريض يستطيع رفع المرفقات الطبية الخاصة فقط.');
     if (actor.role === UserRole.DOCTOR && ![UploadCategory.DOCTOR_PHOTO, UploadCategory.DOCTOR_QUALIFICATION].includes(category)) throw new ForbiddenException('فئة الملف غير مسموحة للطبيب.');
-    if (actor.role === UserRole.OWNER && ![UploadCategory.FACILITY_IMAGE, UploadCategory.FACILITY_DOCUMENT].includes(category)) throw new ForbiddenException('فئة الملف غير مسموحة للمالك.');
-    if (actor.role === UserRole.OWNER) {
+    if ([UserRole.OWNER, UserRole.FACILITY_MANAGER].includes(actor.role) && ![UploadCategory.FACILITY_IMAGE, UploadCategory.FACILITY_DOCUMENT].includes(category)) throw new ForbiddenException('فئة الملف غير مسموحة لمدير المنشأة.');
+    if ([UserRole.OWNER, UserRole.FACILITY_MANAGER].includes(actor.role)) {
       if (!dto.facilityId) throw new BadRequestException('حدد المنشأة التابعة لهذا الملف.');
-      const facility = await this.facilities.findOne({ where: { id: dto.facilityId, ownerUserId: actor.sub } });
-      if (!facility) throw new ForbiddenException('المنشأة غير موجودة أو لا تتبع حسابك.');
+      const facility = await this.facilities.findOne({ where: { id: dto.facilityId } });
+      if (!facility || (actor.role === UserRole.FACILITY_MANAGER && facility.ownerUserId !== actor.sub)) throw new ForbiddenException('المنشأة غير موجودة أو لا تتبع حسابك.');
     } else if (dto.facilityId) throw new ForbiddenException('لا يمكن ربط هذا الملف بمنشأة أخرى.');
     const mime = String(dto.mimeType || '').toLowerCase();
     const image = ['image/jpeg','image/png','image/webp'].includes(mime);

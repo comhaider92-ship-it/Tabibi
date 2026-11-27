@@ -1,0 +1,61 @@
+name: Tabibi V109 preview APK
+on:
+  push:
+    branches: [v109-ui-redesign]
+  workflow_dispatch:
+jobs:
+  android-preview:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Type-check
+        run: npm run typecheck
+      - name: Expo config check
+        run: npx expo config --type public
+      - name: Generate Android project
+        run: npx expo prebuild --platform android --clean
+        env:
+          EXPO_PUBLIC_DEMO_MODE: '1'
+      - name: Verify Expo Kotlin and Compose compiler compatibility
+        run: |
+          # Expo SDK 52 expo-modules-core requires Kotlin 1.9.24 with Compose Compiler 1.5.14.
+          if grep -q '^android.kotlinVersion=' android/gradle.properties; then
+            sed -i 's/^android.kotlinVersion=.*/android.kotlinVersion=1.9.24/' android/gradle.properties
+          else
+            echo 'android.kotlinVersion=1.9.24' >> android/gradle.properties
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("node_modules/expo-modules-core/android/build.gradle")
+          s = p.read_text()
+          if '"1.9.24": "1.5.14"' not in s:
+              raise SystemExit("Expected Expo Kotlin 1.9.24 / Compose Compiler 1.5.14 mapping was not found")
+          print("Verified compatible Kotlin 1.9.24 / Compose Compiler 1.5.14 mapping")
+          PY
+          echo 'Selected Android Kotlin version:'
+          grep '^android.kotlinVersion=' android/gradle.properties
+      - name: Build APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          EXPO_PUBLIC_DEMO_MODE=1 ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tabibi-v109-preview-apk
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30

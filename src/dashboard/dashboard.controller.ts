@@ -18,8 +18,8 @@ export class DashboardController {
   }
 
   @Get('facilities/:facilityId')
-  @Roles(UserRole.OWNER)
-  facility(@CurrentUser() user: { sub: string }, @Param('facilityId', new ParseUUIDPipe()) facilityId: string, @Query('from') from?: string, @Query('to') to?: string) {
-    return this.dashboard.facility(user.sub, facilityId, from, to);
+  @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
+  facility(@CurrentUser() user: { sub: string; role: UserRole }, @Param('facilityId', new ParseUUIDPipe()) facilityId: string, @Query('from') from?: string, @Query('to') to?: string) {
+    return this.dashboard.facility(user.sub, facilityId, user.role, from, to);
   }
 }

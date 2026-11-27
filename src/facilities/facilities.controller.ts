@@ -24,43 +24,43 @@ export class FacilitiesController {
  constructor(private readonly facilities:FacilitiesService){}
  @Get() directory(@Query() filters:FacilityDirectoryQueryDto){return this.facilities.directory(filters);}
  @Get('owner/pending') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER) pendingFacilities(){return this.facilities.pendingFacilities();}
- @Patch('owner/:id/profile') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER) updateProfile(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Body() dto:UpdateFacilityProfileDto){return this.facilities.updateFacilityProfile(u.sub,id,dto);}
- @Get('owner/:id/services') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER) ownerServices(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string){return this.facilities.ownerServices(u.sub,id);}
- @Get('owner/:id/services/:serviceId/weekly-schedule') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER) ownerWeekly(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Param('serviceId',new ParseUUIDPipe()) serviceId:string){return this.facilities.ownerWeeklySchedule(u.sub,id,serviceId);}
+ @Patch('owner/:id/profile') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER) updateProfile(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Body() dto:UpdateFacilityProfileDto){return this.facilities.updateFacilityProfile(u.sub,id,dto);}
+ @Get('owner/:id/services') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER) ownerServices(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string){return this.facilities.ownerServices(u.sub,id);}
+ @Get('owner/:id/services/:serviceId/weekly-schedule') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER) ownerWeekly(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Param('serviceId',new ParseUUIDPipe()) serviceId:string){return this.facilities.ownerWeeklySchedule(u.sub,id,serviceId);}
  @Get('owner/mine')
- @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
  myFacilities(@CurrentUser() u:{sub:string}){return this.facilities.myFacilities(u.sub);}
  @Get(':id/services') services(@Param('id',new ParseUUIDPipe()) id:string){return this.facilities.servicesFor(id);}
  @Get(':id/weekly-schedule') weekly(@Param('id',new ParseUUIDPipe()) id:string,@Query('serviceId') serviceId?:string){return this.facilities.publicWeeklySchedule(id,serviceId);}
  @Get(':id/slots') slots(@Param('id',new ParseUUIDPipe()) id:string,@Query() filters:FacilitySlotsQueryDto){return this.facilities.publicSlots(id,filters);}
  @Post()
- @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
  create(@CurrentUser() u:{sub:string},@Body() dto:CreateFacilityDto){return this.facilities.createFacility(u.sub,dto);}
- @Get('owner/:id/schedule-exceptions') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER) ownerExceptions(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string){return this.facilities.ownerScheduleExceptions(u.sub,id);}
- @Post('owner/:id/schedule-exceptions') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER) createException(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Body() dto:CreateScheduleExceptionDto){return this.facilities.createScheduleException(u.sub,id,dto);}
- @Patch('owner/:id/schedule-exceptions/:exceptionId/restore') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER) restoreException(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Param('exceptionId',new ParseUUIDPipe()) exceptionId:string){return this.facilities.restoreScheduleException(u.sub,id,exceptionId);}
+ @Get('owner/:id/schedule-exceptions') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER) ownerExceptions(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string){return this.facilities.ownerScheduleExceptions(u.sub,id);}
+ @Post('owner/:id/schedule-exceptions') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER) createException(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Body() dto:CreateScheduleExceptionDto){return this.facilities.createScheduleException(u.sub,id,dto);}
+ @Patch('owner/:id/schedule-exceptions/:exceptionId/restore') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER) restoreException(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Param('exceptionId',new ParseUUIDPipe()) exceptionId:string){return this.facilities.restoreScheduleException(u.sub,id,exceptionId);}
  @Post('owner/:id/services/:serviceId/weekly-schedule')
- @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
  saveWeekly(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Param('serviceId',new ParseUUIDPipe()) serviceId:string,@Body() dto:SaveWeeklyScheduleDto){return this.facilities.saveWeeklySchedule(u.sub,id,serviceId,dto);}
  @Post('owner/:id/services/:serviceId/generate-slots')
- @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
  generateSlots(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Param('serviceId',new ParseUUIDPipe()) serviceId:string,@Body() dto:GenerateFacilitySlotsDto){return this.facilities.generateFacilitySlots(u.sub,id,serviceId,dto);}
  @Patch('owner/:id/services/:serviceId')
- @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
  updateService(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Param('serviceId',new ParseUUIDPipe()) serviceId:string,@Body() dto:UpdateFacilityServiceDto){return this.facilities.updateService(u.sub,id,serviceId,dto);}
  @Post(':id/services')
- @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
  addService(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Body() dto:CreateFacilityServiceDto){return this.facilities.addService(u.sub,id,dto);}
- @Get('owner/:id/slots') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER) ownerSlots(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Query('serviceId') serviceId?:string,@Query('from') from?:string,@Query('to') to?:string){return this.facilities.ownerSlots(u.sub,id,serviceId,from,to);}
- @Patch('owner/:id/slots/:slotId/status') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER) updateSlotStatus(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Param('slotId',new ParseUUIDPipe()) slotId:string,@Body() dto:UpdateFacilitySlotStatusDto){return this.facilities.updateOwnerSlotStatus(u.sub,id,slotId,dto.status);}
+ @Get('owner/:id/slots') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER) ownerSlots(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Query('serviceId') serviceId?:string,@Query('from') from?:string,@Query('to') to?:string){return this.facilities.ownerSlots(u.sub,id,serviceId,from,to);}
+ @Patch('owner/:id/slots/:slotId/status') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER) updateSlotStatus(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Param('slotId',new ParseUUIDPipe()) slotId:string,@Body() dto:UpdateFacilitySlotStatusDto){return this.facilities.updateOwnerSlotStatus(u.sub,id,slotId,dto.status);}
  @Post('owner/:id/slots')
- @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
  createSlot(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Body() dto:CreateFacilitySlotDto){return this.facilities.createSlot(u.sub,id,dto);}
  @Get('owner/:id/bookings')
- @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
  ownerBookings(@CurrentUser() u:{sub:string},@Param('id',new ParseUUIDPipe()) id:string,@Query('status') status?:string){return this.facilities.ownerBookings(u.sub,id,status);}
  @Patch('owner/bookings/:bookingId/status')
- @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)
+ @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)
  updateBooking(@CurrentUser() u:{sub:string},@Param('bookingId',new ParseUUIDPipe()) id:string,@Body() dto:UpdateFacilityBookingStatusDto){return this.facilities.updateBookingStatus(u.sub,id,dto);}
  @Patch('bookings/:id/cancel')
  @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.PATIENT)

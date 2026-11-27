@@ -3,7 +3,7 @@ import {Alert,Text,View} from 'react-native';
 import {Screen} from '../components/Screen';
 import {Action,Body,Field,Heading,Item,Loading} from '../components/UI';
 import {api} from '../api/client';
-const types=[{value:'hospital',label:'مستشفى'},{value:'laboratory',label:'مختبر'},{value:'radiology',label:'مركز أشعة'},{value:'diagnostics',label:'مركز فحوصات'},{value:'imaging',label:'مركز تصوير'}];
+const types=[{value:'hospital',label:'مستشفى'},{value:'clinic',label:'عيادة'},{value:'medical_center',label:'مركز طبي'},{value:'laboratory',label:'مختبر'},{value:'radiology',label:'مركز أشعة'},{value:'diagnostics',label:'مركز فحوصات'},{value:'imaging',label:'مركز تصوير'},{value:'pharmacy',label:'صيدلية'}];
 const statusName=(s:string)=>s==='approved'?'معتمد':s==='pending'?'قيد المراجعة':s==='rejected'?'مرفوض':s==='suspended'?'موقوف':s;
 export function OwnerFacilitiesScreen(){
  const [rows,setRows]=useState<any[]>([]);const [selected,setSelected]=useState<any>(null);const [name,setName]=useState('');const [city,setCity]=useState('');const [address,setAddress]=useState('');const [phone,setPhone]=useState('');const [description,setDescription]=useState('');const [facilityType,setFacilityType]=useState('hospital');const [busy,setBusy]=useState(false);

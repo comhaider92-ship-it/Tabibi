@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { User, UserRole } from './user.entity';
 import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
@@ -13,6 +13,8 @@ export class UsersService {
  }
  findById(id:string){return this.repo.findOne({where:{id}});}
  create(data:Partial<User>){return this.repo.save(this.repo.create(data));}
+ listPendingFacilityManagers(){return this.repo.find({where:{role:UserRole.FACILITY_MANAGER,isActive:false},select:['id','displayName','email','phone','role','isVerified','createdAt'],order:{createdAt:'ASC'}});}
+ async approveFacilityManager(id:string){const user=await this.repo.findOne({where:{id,role:UserRole.FACILITY_MANAGER,isActive:false}});if(!user)return null;user.isActive=true;user.isVerified=true;return this.repo.save(user);}
  async updatePassword(id:string,password:string){
   await this.repo.increment({id},'tokenVersion',1);
   await this.repo.update({id},{passwordHash:await bcrypt.hash(password,12)});

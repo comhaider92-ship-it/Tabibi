@@ -16,7 +16,7 @@ const groupOf=(item:NotificationRow):Exclude<Filter,'all'|'unread'>=>{
 const categoryLabel=(item:NotificationRow)=>groupOf(item)==='appointments'?'حجوزات ومواعيد':groupOf(item)==='messages'?'الرسائل':'تنبيهات الحساب';
 const hasDestination=(item:NotificationRow)=>!!(item.appointmentId||item.data?.appointmentId||item.data?.facilityBookingId||item.data?.bookingId||item.data?.messageId||item.data?.screen);
 const dayGroup=(value:string)=>{const d=new Date(value);const now=new Date();const today=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();const day=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();if(day===today)return 'اليوم';if(day===today-86400000)return 'أمس';return 'سابقاً';};
-export function NotificationsScreen({role,onOpenRelated}:{role:'patient'|'doctor'|'owner';onOpenRelated:(item:any)=>void}){
+export function NotificationsScreen({role,onOpenRelated}:{role:'patient'|'doctor'|'owner'|'facility_manager';onOpenRelated:(item:any)=>void}){
  const [rows,setRows]=useState<NotificationRow[]>([]);const [unread,setUnread]=useState(0);const [busy,setBusy]=useState(true);const [refreshing,setRefreshing]=useState(false);const [filter,setFilter]=useState<Filter>('all');const [search,setSearch]=useState('');const [opening,setOpening]=useState<string|null>(null);
  const load=useCallback(async()=>{try{const result=await api.notifications(1,50);setRows(result.items||[]);setUnread(result.unreadCount||0);}catch(e){Alert.alert('تعذر تحميل الإشعارات',e instanceof Error?e.message:'حدث خطأ');}finally{setBusy(false);setRefreshing(false);}},[]);
  useFocusEffect(useCallback(()=>{load();},[load]));

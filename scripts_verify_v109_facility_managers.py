@@ -6,6 +6,7 @@ auth_service = read('src/auth/auth.service.ts')
 auth_controller = read('src/auth/auth.controller.ts')
 users = read('src/users/users.service.ts')
 facilities_controller = read('src/facilities/facilities.controller.ts')
+facilities_controller_compact = ''.join(facilities_controller.split())
 facilities_service = read('src/facilities/facilities.service.ts')
 dashboard_controller = read('src/dashboard/dashboard.controller.ts')
 dashboard_service = read('src/dashboard/dashboard.service.ts')
@@ -25,7 +26,7 @@ checks = {
     'system owner dashboard can inspect all facilities while manager dashboards remain scoped': "actorRole !== UserRole.OWNER && facility.ownerUserId !== ownerId" in dashboard_service,
     'system owner can upload to any facility while managers remain owner-scoped': "actor.role === UserRole.FACILITY_MANAGER && facility.ownerUserId !== actor.sub" in read('src/uploads/uploads.service.ts'),
     'facility managers may upload only facility images and documents for facilities they own': "[UserRole.OWNER, UserRole.FACILITY_MANAGER]" in read('src/uploads/uploads.service.ts') and "facility.ownerUserId !== actor.sub" in read('src/uploads/uploads.service.ts'),
-    'facility review remains owner-only': "@Patch('owner/:id/review')" in facilities_controller and "@Roles(UserRole.OWNER)" in facilities_controller[facilities_controller.index("@Patch('owner/:id/review')"):facilities_controller.index("@Patch('owner/:id/review')")+180],
+    'facility review remains owner-only': "@Patch('owner/:id/review')@UseGuards(JwtAuthGuard,RolesGuard)@Roles(UserRole.OWNER)" in facilities_controller_compact,
     'pending facility review queue remains owner-only': "@Get('owner/pending') @UseGuards(JwtAuthGuard,RolesGuard) @Roles(UserRole.OWNER)" in facilities_controller,
     'facility dashboard is role-guarded and scoped to the manager-owned facility': "@Roles(UserRole.OWNER,UserRole.FACILITY_MANAGER)" in dashboard_controller and 'facility.ownerUserId !== ownerId' in dashboard_service,
     'database role column migration supports the new role': 'TYPE varchar(20)' in migration,

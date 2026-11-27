@@ -3,7 +3,7 @@ import {Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View} from 'r
 
 type Props={onExit:()=>void};
 type Entry={name:string;kind:string;city:string;area:string;icon:string;detail:string};
-const palette={bg:'#F4F8F7',paper:'#FFFFFF',ink:'#173447',muted:'#718491',teal:'#087F82',deep:'#123D4A',aqua:'#DDF2EE',line:'#E2ECE9',gold:'#E6B96B',soft:'#F8F1E6'};
+const palette={bg:'#F7F5EF',paper:'#FFFFFF',ink:'#1F352E',muted:'#74837A',teal:'#176B50',deep:'#123D31',aqua:'#E8F1E9',line:'#E3E9E1',gold:'#D8AE65',soft:'#F4EFE4'};
 const specialties=[['طب الأطفال','🧸'],['أمراض النساء','🌷'],['القلب','❤️'],['الباطنية','🩺'],['الأسنان','🦷'],['الجلدية','✨'],['العظام','🦴'],['العيون','👁️'],['الأنف والأذن والحنجرة','👂'],['الأعصاب','🧠'],['الجراحة','⚕️'],['طب الأسرة','🏡'],['المسالك البولية','💧'],['الطب النفسي','🧠'],['الأورام','🎗️'],['الغدد الصماء','🧬'],['الكلى','🫘'],['الروماتيزم','🦴'],['التغذية','🥗']] as const;
 const doctors=[{name:'د. أحمد علي',spec:'طب الأطفال',city:'البصرة',area:'العشار',clinic:'عيادة الأمل',days:'الأحد والثلاثاء والخميس',icon:'👨🏻‍⚕️',rating:'4.9'},{name:'د. زهراء كريم',spec:'أمراض النساء',city:'البصرة',area:'البراضعية',clinic:'مركز الحياة الطبي',days:'السبت والاثنين والأربعاء',icon:'👩🏻‍⚕️',rating:'4.8'},{name:'د. مصطفى حسن',spec:'الباطنية والقلب',city:'بغداد',area:'الكرادة',clinic:'مستشفى الشفاء',days:'الأحد والثلاثاء',icon:'👨🏻‍⚕️',rating:'4.7'}];
 const facilities:Entry[]=[
